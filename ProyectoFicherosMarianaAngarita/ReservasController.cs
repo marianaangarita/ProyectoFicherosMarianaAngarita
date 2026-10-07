@@ -1,10 +1,11 @@
 ﻿namespace ProyectoFicherosMarianaAngarita
 {
-    internal class Program
+    internal class Reservas
     {
         static void Main(string[] args)
         {
             Console.WriteLine("Hello, World!");
         }
+
     }
 }
