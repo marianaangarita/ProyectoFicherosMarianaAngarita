@@ -19,7 +19,7 @@ namespace ProyectoReservas.Controlller
                 Console.WriteLine("=========================================");
                 Console.WriteLine("      SISTEMA DE RESERVAS AIRTORTILLA    ");
                 Console.WriteLine("=========================================");
-                Console.WriteLine("1. Generar ficheros de Reserva por país (Proceso automático)");
+                Console.WriteLine("1. Generar ficheros de Reserva por país");
                 Console.WriteLine("2. Consultar fichero generado (Modalidad TOTAL)");
                 Console.WriteLine("3. Consultar fichero generado (Modalidad LÍNEA A LÍNEA)");
                 Console.WriteLine("4. Salir");
@@ -33,9 +33,29 @@ namespace ProyectoReservas.Controlller
                 switch (opcionInt)
                 {
                     case 1:
-                        Console.WriteLine("\n[Generando archivos por país]");
-                        // Lógica para leer el CSV principal y repartirlo en los AirTortilla_XX...
-                        Console.WriteLine("Archivos generados con éxito. Presiona una tecla para volver.");
+                        Console.WriteLine("\n[Generar ficheros por país]");
+                        Console.Write("Por favor, introduce la ruta del archivo CSV original: ");
+                        string rutaOrigen = Console.ReadLine();
+
+                        // Comprobamos si el archivo realmente existe en el disco
+                        if (File.Exists(rutaOrigen))
+                        {
+                            Console.WriteLine("\nArchivo encontrado. Generando archivos...");
+
+                            // AQUÍ IRÁ LA LÓGICA DE PARTICIÓN
+                            // 1. Leer línea a línea
+                            // 2. Extraer país y fecha
+                            // 3. Escribir en el nuevo archivo AirTortilla_XX_YYYY_MM_DD.csv
+
+                            Console.WriteLine("Archivos generados con éxito.");
+                        }
+                        else
+                        {
+                            // Si no existe, mostramos el error y evitamos que el programa explote
+                            Console.WriteLine("\nError: No se encontró ningún archivo en esa ruta.");
+                        }
+
+                        Console.WriteLine("Presiona una tecla para volver al menú.");
                         Console.ReadKey();
                         break;
                     case 2:
