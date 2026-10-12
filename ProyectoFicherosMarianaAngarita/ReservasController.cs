@@ -5,7 +5,7 @@ using System.IO;
 using ProyectoReservas.DTO;
 using ProyectoReservas.Conversor;
 
-namespace ProyectoReservas.Controlller
+namespace ProyectoReservas.Controller
 {
     public class ReservasController
     {
@@ -19,7 +19,7 @@ namespace ProyectoReservas.Controlller
                 Console.WriteLine("=========================================");
                 Console.WriteLine("     SISTEMA DE RESERVAS AIRTORTILLA     ");
                 Console.WriteLine("=========================================");
-                Console.WriteLine("1. Generar ficheros por país (CSV, JSON, XML, TXT)");
+                Console.WriteLine("1. Generar ficheros por país de destino");
                 Console.WriteLine("2. Consultar fichero (Modalidad TOTAL)");
                 Console.WriteLine("3. Consultar fichero (Modalidad LÍNEA A LÍNEA)");
                 Console.WriteLine("4. Salir");

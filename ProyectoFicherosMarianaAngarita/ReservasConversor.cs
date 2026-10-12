@@ -6,7 +6,7 @@ using System.Linq;
 using ProyectoReservas.DTO;
 using System.Text.Json;
 using System.Xml.Serialization;
-using System.Security.Cryptography.X509Certificates;
+
 
 namespace ProyectoReservas.Conversor;
 
@@ -34,7 +34,7 @@ namespace ProyectoReservas.Conversor;
 
                 while ((linea = reader.ReadLine()) != null)
                 {
-                    numeroLinea++; //esto porque ya no se añade?
+                    numeroLinea++; 
 
                     if (string.IsNullOrWhiteSpace(linea))
                         continue;
@@ -43,31 +43,30 @@ namespace ProyectoReservas.Conversor;
                     {
                         string[] datos = linea.Split(',');
 
-                        if (datos.Length < 8)
+                        if (datos.Length != 8)
                         {
+                            Console.WriteLine($"[Aviso] Número de campos incorrecto en la línea {numeroLinea} (se esperaban 8 y hay {datos.Length}). Se omite la fila.");
                             continue;
                         }
+                        string destino = datos[1].Trim().ToUpper();
+                        string origen = datos[2].Trim().ToUpper();
 
-
-                        string localizador = datos[0];
-                        string destino = datos[1];
-                        string origen = datos[2];
-                        string nombrePasajero = datos[3];
-                        string primerApellido = datos[4];
-                        string segundoApellido = datos[5];
-                        string documentoIdentidad = datos[6];
-
-                        // Conversión de fecha con manejo de excepciones por fila
+                        if (!EsCodigoIso(destino) || !EsCodigoIso(origen))
+                        {
+                            Console.WriteLine($"[Aviso] Código ISO no válido en la línea {numeroLinea} (Destino: '{datos[1]}', Origen: '{datos[2]}'). Se omite la fila.");
+                            continue;
+                        }
                         DateTime fechaReserva = DateTime.Parse(datos[7]);
 
+
                         ReservasDTO reserva = new ReservasDTO(
-                            localizador,
+                            datos[0].Trim(),
                             destino,
                             origen,
-                            nombrePasajero,
-                            primerApellido,
-                            segundoApellido,
-                            documentoIdentidad,
+                            datos[3].Trim(),
+                            datos[4].Trim(),
+                            datos[5].Trim(),
+                            datos[6].Trim(),
                             fechaReserva
                         );
 
@@ -77,11 +76,6 @@ namespace ProyectoReservas.Conversor;
                     {
                         // Captura errores si el Parse() de la fecha falla
                         Console.WriteLine($"[Aviso] Formato de fecha no válido en la línea {numeroLinea}. Se omite la fila.");
-                    }
-                    catch (IndexOutOfRangeException)
-                    {
-                        // Captura errores por si acaso alguna variable intenta acceder a una posición que no existe
-                        Console.WriteLine($"[Aviso] Faltan datos en la línea {numeroLinea}. Se omite la fila.");
                     }
                     catch (Exception ex) // Catch de seguridad genérico por fila
                     {
@@ -96,6 +90,11 @@ namespace ProyectoReservas.Conversor;
         }
 
         return listaReservas;
+    }
+
+    private static bool EsCodigoIso(string codigo)
+    {
+        return codigo.Length == 2 && codigo.All(c => c >= 'A' && c <= 'Z');
     }
     #endregion
 
@@ -116,6 +115,8 @@ namespace ProyectoReservas.Conversor;
     {
 
         string ext = extension.ToLower().Trim();
+        int generados = 0;
+        int fallidos = 0;
 
         foreach (var grupo in grupos)
         {
@@ -123,33 +124,30 @@ namespace ProyectoReservas.Conversor;
             string fecha = grupo.Key.Fecha.ToString("yyyy_MM_dd");
             string nombreArchivo = $"AirTortilla_{destino}_{fecha}.{ext}";
 
-            // Convertimos el grupo en una lista real para poder serializarla
-            List<ReservasDTO> listaGrupo = grupo.ToList();
+            // Ordenar las reservas del fichero por localizador (y por DNI dentro del mismo localizador)
+            List<ReservasDTO> listaGrupo = grupo
+                .OrderBy(r => r.Localizador)
+                .ThenBy(r => r.DocumentoIdentidad)
+                .ToList()
 
             try
             {
                 switch (ext)
                 {
                     case "csv":
-                        var lineasCsv = new List<string>();
-
-                        lineasCsv.Add(ReservasDTO.GetCsvHeader());
+                        var lineasCsv = new List<string> { ReservasDTO.GetCsvHeader() };
                         lineasCsv.AddRange(listaGrupo.Select(r => r.ToCsvLine()));
-
                         File.WriteAllLines(nombreArchivo, lineasCsv);
+
                         break;
 
                     case "txt":
-                        var lineasTxt = listaGrupo.Select(r => r.ToTxtLine());
-
-                        File.WriteAllLines(nombreArchivo, lineasTxt);
+                        File.WriteAllLines(nombreArchivo, listaGrupo.Select(r => r.ToTxtLine()));
                         break;
 
                     case "json":
                         var opcionesJson = new JsonSerializerOptions { WriteIndented = true };
-                        string jsonString = JsonSerializer.Serialize(listaGrupo, opcionesJson);
-
-                        File.WriteAllText(nombreArchivo, jsonString);
+                        File.WriteAllText(nombreArchivo, JsonSerializer.Serialize(listaGrupo, opcionesJson));
                         break;
 
                     case "xml":
@@ -160,13 +158,18 @@ namespace ProyectoReservas.Conversor;
                         }
                         break;
                 }
+                generados++;
             }
-            catch (IOException ex)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
             {
+                fallidos++;
                 Console.WriteLine($"Error al escribir {nombreArchivo}: {ex.Message}");
             }
         }
-        Console.WriteLine($"Archivos .{ext} generados con éxito bajo estructura estándar.");
+        if (fallidos == 0)
+            Console.WriteLine($"{generados} archivos .{ext} generados correctamente.");
+        else
+            Console.WriteLine($"{generados} archivos .{ext} generados, {fallidos} con error.");
     }
     #endregion
 

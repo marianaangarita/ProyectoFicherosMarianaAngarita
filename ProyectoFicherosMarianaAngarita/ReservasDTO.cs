@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text.Json;
 namespace ProyectoReservas.DTO;
 
 public class ReservasDTO
