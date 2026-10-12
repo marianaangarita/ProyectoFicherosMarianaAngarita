@@ -33,7 +33,7 @@ namespace ProyectoReservas.Controller
                     switch (opcion)
                     {
                         case "1":
-                            Console.Write("Introduce la ruta completa o el nombre del archivo .csv de origen: ");
+                            Console.Write("Introduce la ruta completa: ");
                             string rutaBase = Console.ReadLine();
 
                             Console.Write("¿En qué formato deseas exportar? (1: csv / 2: json / 3: xml / 4: txt): ");
