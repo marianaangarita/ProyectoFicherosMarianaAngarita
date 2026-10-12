@@ -159,7 +159,7 @@ namespace ProyectoReservas.Conversor;
             List<ReservasDTO> listaGrupo = grupo
                 .OrderBy(r => r.Localizador)
                 .ThenBy(r => r.DocumentoIdentidad)
-                .ToList()
+                .ToList();
 
             try
             {
