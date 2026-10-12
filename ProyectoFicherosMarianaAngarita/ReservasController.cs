@@ -13,80 +13,65 @@ namespace ProyectoReservas.Controlller
         {
             bool salir = false;
 
+            // Ruta del archivo base con los datos falsos (asegúrate de incluir los casos de duplicidad exigidos)
+            string rutaBase = "reservas_airtortilla.csv";
+
             while (!salir)
             {
                 Console.Clear();
                 Console.WriteLine("=========================================");
-                Console.WriteLine("      SISTEMA DE RESERVAS AIRTORTILLA    ");
+                Console.WriteLine("     SISTEMA DE RESERVAS AIRTORTILLA     ");
                 Console.WriteLine("=========================================");
-                Console.WriteLine("1. Generar ficheros de Reserva por país");
-                Console.WriteLine("2. Consultar fichero generado (Modalidad TOTAL)");
-                Console.WriteLine("3. Consultar fichero generado (Modalidad LÍNEA A LÍNEA)");
+                Console.WriteLine("1. Generar ficheros por país (CSV, JSON, XML, TXT)");
+                Console.WriteLine("2. Consultar fichero (Modalidad TOTAL)");
+                Console.WriteLine("3. Consultar fichero (Modalidad LÍNEA A LÍNEA)");
                 Console.WriteLine("4. Salir");
                 Console.WriteLine("=========================================");
                 Console.Write("Elige una opción (1-4): ");
 
                 string opcion = Console.ReadLine();
-
                 int opcionInt = int.Parse(opcion);
 
                 switch (opcionInt)
                 {
-                    case 1:
-                        Console.WriteLine("\n[Generar ficheros por país]");
-                        Console.Write("Por favor, introduce la ruta del archivo CSV original: ");
-                        string rutaOrigen = Console.ReadLine();
+                    //case 1:
+                    //    Console.Write("¿En qué formato deseas exportar? (csv: 1 / json: 2 / xml: 3 / txt: 4): ");
+                    //    string formato = Console.ReadLine();
+                    //    var datos = ReservasConversor.LeerReservasDesdeCsv(rutaBase);
+                    //    ReservasConversor.GenerarFicheros(formato, datos);
+                    //    Pausar();
+                    //    break;
 
-                        // Comprobamos si el archivo realmente existe en el disco
-                        if (File.Exists(rutaOrigen))
-                        {
-                            Console.WriteLine("\nArchivo encontrado. Generando archivos...");
-
-                            // AQUÍ IRÁ LA LÓGICA DE PARTICIÓN
-                            // 1. Leer línea a línea
-                            // 2. Extraer país y fecha
-                            // 3. Escribir en el nuevo archivo AirTortilla_XX_YYYY_MM_DD.csv
-
-                            Console.WriteLine("Archivos generados con éxito.");
-                        }
-                        else
-                        {
-                            // Si no existe, mostramos el error y evitamos que el programa explote
-                            Console.WriteLine("\nError: No se encontró ningún archivo en esa ruta.");
-                        }
-
-                        Console.WriteLine("Presiona una tecla para volver al menú.");
-                        Console.ReadKey();
-                        break;
                     case 2:
-                        Console.WriteLine("\n[Consulta Total]");
-                        Console.Write("Introduce la ruta o nombre del archivo a consultar: ");
-                        string rutaTotal = Console.ReadLine();
-                        // Lógica para File.ReadAllLines() y hacer un foreach imprimiendo todo
-                        Console.WriteLine("\nFin del archivo. Presiona una tecla para volver.");
-                        Console.ReadKey();
+                        Console.Write("Introduce el nombre completo del archivo a consultar (ej. AirTortilla_FR_2026_05_14.csv): ");
+                        ReservasConversor.ConsultarModalidadTotal(Console.ReadLine());
+                        Pausar();
                         break;
+
                     case 3:
-                        Console.WriteLine("\n[Consulta Línea a Línea]");
-                        Console.Write("Introduce la ruta o nombre del archivo a consultar: ");
-                        string rutaParcial = Console.ReadLine();
-                        // Lógica con StreamReader, imprimiendo una línea y haciendo Console.ReadLine() para avanzar
-                        Console.WriteLine("\nFin del archivo. Presiona una tecla para volver.");
-                        Console.ReadKey();
+                        Console.Write("Introduce el nombre del archivo (Recomendado para CSV/TXT): ");
+                        ReservasConversor.ConsultarModalidadLineaALinea(Console.ReadLine());
+                        Pausar();
                         break;
+
                     case 4:
                         salir = true;
-                        Console.WriteLine("\nCerrando el sistema. ¡Hasta luego!");
                         break;
+
                     default:
                         Console.WriteLine("\nOpción no válida. Inténtalo de nuevo.");
                         Console.ReadKey();
                         break;
-
                 }
             }
-
         }
+
+        static void Pausar()
+        {
+            Console.WriteLine("\nPresiona cualquier tecla para continuar...");
+            Console.ReadKey();
+        }
+
 
     }
 
