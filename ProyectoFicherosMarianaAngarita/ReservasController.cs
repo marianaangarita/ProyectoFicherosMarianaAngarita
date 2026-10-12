@@ -9,7 +9,7 @@ namespace ProyectoReservas.Controlller
 {
     public class ReservasController
     {
-        static void Main(string[] args) //Falta añadir try-catch
+        static void Main(string[] args) 
         {
             bool salir = false;
 
