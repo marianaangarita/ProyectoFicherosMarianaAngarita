@@ -99,27 +99,6 @@ namespace ProyectoReservas.Conversor;
     }
     #endregion
 
-    #region Ordenar
-    public static List<ReservasDTO> FiltrarReservas(List<ReservasDTO> reservas, string destino, string localizador = null, string dni = null) 
-        //Por si se quiere filtrar por más cosas en el futuro
-    {
-        try
-        {
-            IEnumerable<ReservasDTO> consulta = reservas;
-
-            if (!string.IsNullOrEmpty(destino))
-                consulta = consulta.Where(r => r.Destino == destino);
-
-            return consulta.ToList();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al procesar: {ex.Message}");
-            return new List<ReservasDTO>();
-        }
-    }
-    #endregion
-
     #region Agrupar
     public static IEnumerable<IGrouping<(string Destino, DateTime Fecha), ReservasDTO>> AgruparReservas(List<ReservasDTO> reservas)
     {
@@ -226,6 +205,7 @@ namespace ProyectoReservas.Conversor;
                 {
                     Console.WriteLine(linea);
                     Console.WriteLine(">> Presiona [ENTER] para la siguiente línea o escribe [Q] para salir...");
+
                     if (Console.ReadLine()?.Trim().ToUpper() == "Q") break;
                 }
             }
