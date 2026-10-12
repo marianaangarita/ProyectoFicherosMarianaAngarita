@@ -32,7 +32,7 @@ LOC002,FR,ES,Juan,Perez,Gomez,22222222B,2026-05-14
 LOC003,FR,ES,Juan,Perez,Gomez,33333333C,2026-05-14
 LOC004,FR,ES,Juan,Perez,Gomez,44444444D,2026-05-14
 LOC005,FR,ES,Juan,Perez,Gomez,55555555E,2026-05-14
-csv```
+```
 
 ### Restricciones
 
