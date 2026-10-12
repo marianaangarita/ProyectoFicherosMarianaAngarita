@@ -108,7 +108,7 @@ namespace ProyectoReservas.Conversor;
                         // Captura errores si el Parse() de la fecha falla
                         Console.WriteLine($"[Aviso] Formato de fecha no válido en la línea {numeroLinea}. Se omite la fila.");
                     }
-                    catch (Exception ex) // Catch de seguridad genérico por fila
+                    catch (Exception ex) 
                     {
                         Console.WriteLine($"[Aviso] Error inesperado en la línea {numeroLinea}: {ex.Message}. Se omite la fila.");
                     }
