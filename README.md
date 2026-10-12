@@ -5,17 +5,26 @@ A continuación se detalla el flujo de datos desde la lectura del CSV hasta la g
 
 ![Diagrama de Arquitectura](assets/AirTortilla_Diagrama.drawio.png)
 
-## Estructura del Archivo CSV de Entrada
+## Formato del CSV de entrada
 
-Para ejecutar correctamente el conversor, el archivo CSV de origen debe contener una primera línea de **cabecera** obligatoria, seguida de los datos. El delimitador debe ser una coma (`,`).
+- Codificación: UTF-8.
+- La primera línea es una cabecera y se ignora.
+- Separador: coma (`,`). Los campos no pueden contener comas.
+- Columnas (en este orden):
 
-**Orden de las columnas (8 en total):**
-`Localizador,Destino,Origen,NombrePasajero,PrimerApellido,SegundoApellido,DocumentoIdentidad,FechaReserva`
+| Columna | Descripción | Ejemplo |
+|---|---|---|
+| Localizador | Código único de reserva. Varios pasajeros pueden compartirlo | AT1001 |
+| Destino | Código ISO 3166-1 alfa-2 del país | FR |
+| Origen | Código ISO 3166-1 alfa-2 del país | ES |
+| NombrePasajero | Nombre | Maria |
+| PrimerApellido | Primer apellido | Garcia |
+| SegundoApellido | Segundo apellido | Lopez |
+| DocumentoIdentidad | Identificador único del pasajero | 10000001A |
+| FechaReserva | Formato `yyyy-MM-dd` | 2026-05-14 |
 
-*Nota sobre la fecha:* Debe ser compatible con el formato estándar `yyyy-MM-dd` (ej. 2026-05-14).
-
-### Ejemplo de datos válidos (Casos de Coincidencia)
-Según los requisitos del proyecto, el sistema gestiona reservas inequívocas mediante el `Localizador` cuando el Nombre, Origen y Destino coinciden. Para probar la validación de "al menos 5 personas coincidentes", el archivo CSV de prueba debe contener filas estructuradas de esta manera:
+Las filas vacías, incompletas o con fecha no válida se omiten con un aviso.
+Los ficheros CSV de prueba y los ficheros generados no se incluyen en el repositorio.
 
 ```csv
 Localizador,Destino,Origen,NombrePasajero,PrimerApellido,SegundoApellido,DocumentoIdentidad,FechaReserva
