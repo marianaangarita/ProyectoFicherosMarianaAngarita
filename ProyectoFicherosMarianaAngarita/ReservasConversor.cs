@@ -201,6 +201,8 @@ namespace ProyectoReservas.Conversor;
             Console.WriteLine($"{generados} archivos .{ext} generados correctamente.");
         else
             Console.WriteLine($"{generados} archivos .{ext} generados, {fallidos} con error.");
+
+        Console.WriteLine($"Ubicación: {Directory.GetCurrentDirectory()}");
     }
     #endregion
 
@@ -235,15 +237,22 @@ namespace ProyectoReservas.Conversor;
             using (StreamReader sr = new StreamReader(ruta))
             {
                 string linea;
+                bool interrumpido = false;
+
                 while ((linea = sr.ReadLine()) != null)
                 {
                     Console.WriteLine(linea);
                     Console.WriteLine(">> Presiona [ENTER] para la siguiente línea o escribe [Q] para salir...");
 
-                    if (Console.ReadLine()?.Trim().ToUpper() == "Q") break;
+
+                    if (Console.ReadLine()?.Trim().ToUpper() == "Q")
+                    {
+                        interrumpido = true;
+                        break;
+                    }
                 }
             }
-            Console.WriteLine("Fin del archivo.");
+            Console.WriteLine(interrumpido ? "Lectura interrumpida por el usuario." : "Fin del archivo.");
         }
         catch (IOException ex) { Console.WriteLine($"Error de lectura: {ex.Message}"); }
     }
