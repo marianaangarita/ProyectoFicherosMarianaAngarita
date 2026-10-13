@@ -52,5 +52,37 @@ LOC005,FR,ES,Juan,Perez,Gomez,55555555E,2026-05-14
 - Los ficheros se generan en orden de destino y fecha, y las reservas de cada fichero
   se ordenan por localizador y, dentro del mismo localizador, por documento de identidad.
 - Los CSV de prueba y los ficheros generados no se incluyen en el repositorio (ver `.gitignore`).
+  
+## Requisitos y ejecución
 
+- .NET 10 SDK (comprobar con `dotnet --version`).
+- Visual Studio 2022 o superior (opcional; también se puede ejecutar por terminal).
+
+### Opción A: terminal (recomendada, funciona en cualquier PC)
+
+Desde la carpeta del proyecto (la que contiene el `.csproj`):
+
+    dotnet run
+
+`dotnet run` restaura los paquetes y compila automáticamente antes de ejecutar.
+
+### Opción B: Visual Studio
+
+Al clonar el repositorio en un equipo nuevo, la carpeta `obj/` no existe
+(no se sube al repositorio). Si al compilar aparece el error
+`No se encuentra el archivo de recursos ...\obj\project.assets.json`:
+
+1. En el Explorador de soluciones, clic derecho sobre la solución → **Restaurar paquetes NuGet**.
+2. **Compilar → Recompilar solución**.
+
+Para que no vuelva a ocurrir, activar en
+**Herramientas → Opciones → Administrador de paquetes NuGet → General**
+las dos opciones de restauración automática de paquetes.
+
+### Ubicación de los ficheros generados
+
+Los ficheros se crean en el directorio de ejecución, que el programa muestra al terminar
+la generación (con Visual Studio: `bin/Debug/net10.0/`; con `dotnet run`: la carpeta
+desde la que se lanza el comando). Para consultarlos con las opciones 2 y 3 basta con
+indicar el nombre del fichero.
 
