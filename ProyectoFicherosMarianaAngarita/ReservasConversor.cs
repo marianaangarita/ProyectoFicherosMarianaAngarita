@@ -6,6 +6,7 @@ using System.Linq;
 using ProyectoReservas.DTO;
 using System.Text.Json;
 using System.Xml.Serialization;
+using System.Globalization;
 
 
 namespace ProyectoReservas.Conversor;
@@ -43,6 +44,7 @@ namespace ProyectoReservas.Conversor;
         "ZA","ZM","ZW"
     };
     #endregion
+
     #region Leer Fichero CSV
     public static List<ReservasDTO> LeerReservasDesdeCsv(string rutaArchivo)
     {
@@ -59,7 +61,7 @@ namespace ProyectoReservas.Conversor;
             using (StreamReader reader = new StreamReader(rutaArchivo))
             {
                 // 1. Saltar la línea de cabecera
-                string cabecera = reader.ReadLine();
+                reader.ReadLine();
                 string linea;
                 int numeroLinea = 1;
 
@@ -87,7 +89,7 @@ namespace ProyectoReservas.Conversor;
                             Console.WriteLine($"[Aviso] Código ISO no válido en la línea {numeroLinea} (Destino: '{datos[1]}', Origen: '{datos[2]}'). Se omite la fila.");
                             continue;
                         }
-                        DateTime fechaReserva = DateTime.Parse(datos[7]);
+                        DateTime fechaReserva = DateTime.ParseExact(datos[7].Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture);
 
 
                         ReservasDTO reserva = new ReservasDTO(
@@ -105,7 +107,7 @@ namespace ProyectoReservas.Conversor;
                     }
                     catch (FormatException)
                     {
-                        // Captura errores si el Parse() de la fecha falla
+                        // Captura errores si el ParseExact() de la fecha falla
                         Console.WriteLine($"[Aviso] Formato de fecha no válido en la línea {numeroLinea}. Se omite la fila.");
                     }
                     catch (Exception ex) 
@@ -251,8 +253,8 @@ namespace ProyectoReservas.Conversor;
                         break;
                     }
                 }
+                Console.WriteLine(interrumpido ? "Lectura interrumpida por el usuario." : "Fin del archivo.");
             }
-            Console.WriteLine(interrumpido ? "Lectura interrumpida por el usuario." : "Fin del archivo.");
         }
         catch (IOException ex) { Console.WriteLine($"Error de lectura: {ex.Message}"); }
     }
