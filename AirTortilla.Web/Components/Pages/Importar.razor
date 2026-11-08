@@ -1,0 +1,105 @@
+﻿@page "/importar"
+@rendermode InteractiveServer
+@using System.Security.Claims
+@using AirTortilla.Web.Data.Csv
+@using AirTortilla.Web.Data.Dao
+@inject IReservaDao ReservaDao
+
+<PageTitle>Importar reservas</PageTitle>
+
+<h1>Importar reservas desde CSV</h1>
+<p class="text-muted">
+    Mismo formato que la entrega 1: cabecera + 8 columnas separadas por comas
+    (Localizador, Destino, Origen, Nombre, PrimerApellido, SegundoApellido, Documento, Fecha yyyy-MM-dd).
+</p>
+
+<div style="max-width: 500px;">
+    <InputFile OnChange="SeleccionarArchivo" accept=".csv" class="form-control mb-3" />
+    <button class="btn btn-primary" disabled="@(archivo is null || procesando)" @onclick="ImportarCsv">
+        @(procesando ? "Importando..." : "Importar")
+    </button>
+</div>
+
+@if (error is not null)
+{
+    <div class="alert alert-danger mt-3">@error</div>
+}
+
+@if (resultado is not null)
+{
+    <div class="alert alert-success mt-3">
+        <b>Importación terminada.</b><br />
+        Reservas importadas: @resultado.ReservasImportadas<br />
+        Pasajeros nuevos: @resultado.PasajerosNuevos
+    </div>
+
+    var todosLosAvisos = avisosLectura.Concat(resultado.Avisos).ToList();
+    if (todosLosAvisos.Count > 0)
+    {
+        <div class="alert alert-warning">
+            <b>@todosLosAvisos.Count aviso(s):</b>
+            <ul class="mb-0">
+                @foreach (var aviso in todosLosAvisos)
+                {
+                    <li>@aviso</li>
+                }
+            </ul>
+        </div>
+    }
+}
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> AuthState { get; set; } = default!;
+
+    private const long TamanoMaximo = 10 * 1024 * 1024; // 10 MB
+
+    private IBrowserFile? archivo;
+    private bool procesando;
+    private ResultadoImportacion? resultado;
+    private List<string> avisosLectura = [];
+    private string? error;
+
+    private void SeleccionarArchivo(InputFileChangeEventArgs e)
+    {
+        archivo = e.File;
+        resultado = null;
+        error = null;
+    }
+
+    private async Task ImportarCsv()
+    {
+        if (archivo is null) return;
+
+        if (!archivo.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            error = "El archivo debe tener extensión .csv.";
+            return;
+        }
+        if (archivo.Size > TamanoMaximo)
+        {
+            error = "El archivo supera el tamaño máximo de 10 MB.";
+            return;
+        }
+
+        procesando = true;
+        try
+        {
+            await using var stream = archivo.OpenReadStream(TamanoMaximo);
+            var (filas, avisos) = await LectorCsvReservas.LeerAsync(stream);
+
+            var estado = await AuthState;
+            var usuarioId = int.Parse(estado.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            resultado = await ReservaDao.ImportarAsync(filas, usuarioId);
+            avisosLectura = avisos;
+        }
+        catch (Exception ex)
+        {
+            error = $"Error al importar: {ex.Message}";
+        }
+        finally
+        {
+            procesando = false;
+        }
+    }
+}

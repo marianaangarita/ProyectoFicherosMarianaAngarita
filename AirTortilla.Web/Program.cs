@@ -1,9 +1,11 @@
 using AirTortilla.Web.Components;
 using AirTortilla.Web.Data;
+using AirTortilla.Web.Data.Dao;
 using AirTortilla.Web.Data.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Pqc.Crypto.Lms;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContextFactory<AirTortillaContext>(options =>
     options.UseMySQL(builder.Configuration.GetConnectionString("AirTortilla")
         ?? throw new InvalidOperationException("Falta la cadena de conexión 'AirTortilla'. Configúrala con dotnet user-secrets.")));
+
+// Acceso a datos(patrón DAO): las páginas piden IReservaDao y aquí se decide la implementación
+builder.Services.AddScoped<IReservaDao, ReservaDaoMySql>();
 
 // Autenticación con cookie
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
