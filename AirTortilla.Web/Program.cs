@@ -29,6 +29,36 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromHours(8); // una jornada laboral
         options.SlidingExpiration = true;               // si sigues usando la app, se renueva
         options.Cookie.HttpOnly = true;                 // el JavaScript del navegador no puede leerla
+
+        // En cada petición se comprueba que el usuario de la cookie sigue activo.
+        // Si un administrador lo ha desactivado, se borra la cookie y se le envía al login.
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnValidatePrincipal = async context =>
+            {
+                var idTexto = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(idTexto, out var usuarioId))
+                {
+                    context.RejectPrincipal();
+                    return;
+                }
+
+                var factory = context.HttpContext.RequestServices
+                    .GetRequiredService<IDbContextFactory<AirTortillaContext>>();
+                await using var db = await factory.CreateDbContextAsync();
+
+                var activo = await db.Usuarios
+                    .Where(u => u.Id == usuarioId)
+                    .Select(u => u.Activo)
+                    .FirstOrDefaultAsync();
+
+                if (activo != true)   // desactivado o borrado
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                }
+            }
+        };
     });
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
