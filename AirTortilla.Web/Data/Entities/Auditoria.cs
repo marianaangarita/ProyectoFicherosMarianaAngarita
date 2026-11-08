@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AirTortilla.Web.Data.Entities;
 
-public partial class Auditorium
+public partial class Auditoria
 {
     public long Id { get; set; }
 

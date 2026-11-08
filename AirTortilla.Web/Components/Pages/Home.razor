@@ -1,10 +1,16 @@
 ﻿@page "/"
 @using AirTortilla.Web.Data
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<AirTortillaContext> DbFactory
 
 <h1>Prueba de conexión</h1>
 <p>Países en la base de datos: @totalPaises</p>
+
+<AuthorizeView>
+    <Authorized><p> Sesión iniciada como <b>@context.User.Identity?.Name</b></p></Authorized>
+    <NotAuthorized><p> No has iniciado sesión</p></NotAuthorized>
+</AuthorizeView>
 
 @code {
     private int? totalPaises;
@@ -12,6 +18,6 @@
     protected override async Task OnInitializedAsync()
     {
         await using var db = await DbFactory.CreateDbContextAsync();
-        totalPaises = await db.Pais.CountAsync();
+        totalPaises = await db.Paises.CountAsync();
     }
 }

@@ -15,9 +15,9 @@ public partial class Reserva
 
     public DateTime FechaReserva { get; set; }
 
-    public virtual Pai DestinoNavigation { get; set; } = null!;
+    public virtual Pais DestinoNavigation { get; set; } = null!;
 
-    public virtual Pai OrigenNavigation { get; set; } = null!;
+    public virtual Pais OrigenNavigation { get; set; } = null!;
 
     public virtual ICollection<Pasajero> Pasajeros { get; set; } = new List<Pasajero>();
 }

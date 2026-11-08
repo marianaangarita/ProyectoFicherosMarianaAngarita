@@ -12,21 +12,21 @@ public partial class AirTortillaContext : DbContext
     {
     }
 
-    public virtual DbSet<Auditorium> Auditoria { get; set; }
+    public virtual DbSet<Auditoria> Auditoria { get; set; }
 
-    public virtual DbSet<Pai> Pais { get; set; }
+    public virtual DbSet<Pais> Paises { get; set; }
 
     public virtual DbSet<Pasajero> Pasajeros { get; set; }
 
     public virtual DbSet<Reserva> Reservas { get; set; }
 
-    public virtual DbSet<Rol> Rols { get; set; }
+    public virtual DbSet<Rol> Roles { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Auditorium>(entity =>
+        modelBuilder.Entity<Auditoria>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
 
@@ -49,7 +49,7 @@ public partial class AirTortillaContext : DbContext
                 .HasConstraintName("FK_Auditoria_Usuario");
         });
 
-        modelBuilder.Entity<Pai>(entity =>
+        modelBuilder.Entity<Pais>(entity =>
         {
             entity.HasKey(e => e.CodigoIso).HasName("PRIMARY");
 

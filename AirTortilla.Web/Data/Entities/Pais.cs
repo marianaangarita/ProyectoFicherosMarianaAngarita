@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AirTortilla.Web.Data.Entities;
 
-public partial class Pai
+public partial class Pais
 {
     public string CodigoIso { get; set; } = null!;
 

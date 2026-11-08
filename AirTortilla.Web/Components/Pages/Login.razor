@@ -1,0 +1,93 @@
+@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using AirTortilla.Web.Data
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AirTortillaContext> DbFactory
+@inject NavigationManager Nav
+
+<PageTitle>Iniciar sesión</PageTitle>
+
+<div style="max-width: 400px;">
+    <h1>Iniciar sesión</h1>
+
+    @if (error is not null)
+    {
+        <div class="alert alert-danger">@error</div>
+    }
+
+    <EditForm Model="Input" method="post" OnValidSubmit="IniciarSesion" FormName="login">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label class="form-label">Usuario</label>
+            <InputText @bind-Value="Input.NombreUsuario" class="form-control" autocomplete="username" />
+            <ValidationMessage For="() => Input.NombreUsuario" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Contraseña</label>
+            <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" />
+            <ValidationMessage For="() => Input.Password" />
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Entrar</button>
+    </EditForm>
+</div>
+
+@code {
+    [CascadingParameter] public HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm] private LoginModel Input { get; set; } = new();
+
+    [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+
+    private string? error;
+
+    private async Task IniciarSesion()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var usuario = await db.Usuarios
+            .Include(u => u.Rol)
+            .FirstOrDefaultAsync(u => u.NombreUsuario == Input.NombreUsuario);
+
+        // Mismo mensaje para "no existe", "inactivo" y "contraseña mal"
+        if (usuario is null || usuario.Activo != true ||
+            !BCrypt.Net.BCrypt.Verify(Input.Password, usuario.PasswordHash))
+        {
+            error = "Usuario o contraseña incorrectos.";
+            return;
+        }
+
+        usuario.UltimoAcceso = DateTime.Now;
+        await db.SaveChangesAsync();
+
+        // La "pulsera": datos que viajan cifrados en la cookie
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+            new(ClaimTypes.Name, usuario.NombreUsuario),
+            new(ClaimTypes.Role, usuario.Rol.Nombre)
+        };
+        var identidad = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identidad));
+
+        // Solo redirigimos a rutas internas (evita redirecciones a webs externas)
+        var destino = ReturnUrl is not null && ReturnUrl.StartsWith('/') && !ReturnUrl.StartsWith("//")
+            ? ReturnUrl
+            : "/";
+        Nav.NavigateTo(destino);
+    }
+
+    private sealed class LoginModel
+    {
+        [Required(ErrorMessage = "Introduce el usuario.")]
+        public string NombreUsuario { get; set; } = "";
+
+        [Required(ErrorMessage = "Introduce la contraseña.")]
+        public string Password { get; set; } = "";
+    }
+}
