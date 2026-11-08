@@ -1,0 +1,103 @@
+﻿@page "/auditoria"
+@attribute [Authorize(Roles = "Administrador")]
+@rendermode InteractiveServer
+@using AirTortilla.Web.Data
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AirTortillaContext> DbFactory
+
+<PageTitle>Auditoría</PageTitle>
+
+<h1>Auditoría</h1>
+<p class="text-muted">Registro de accesos y modificaciones. Solo lectura: desde la aplicación no se puede editar ni borrar.</p>
+
+<div class="mb-3" style="max-width: 300px;">
+    <label class="form-label">Filtrar por acción</label>
+    <select class="form-select" @bind="filtro" @bind:after="CargarAsync">
+        <option value="">Todas</option>
+        @foreach (var accion in Acciones)
+        {
+            <option value="@accion">@accion</option>
+        }
+    </select>
+</div>
+
+@if (filas is null)
+{
+    <p><em>Cargando...</em></p>
+}
+else if (filas.Count == 0)
+{
+    <p>No hay registros.</p>
+}
+else
+{
+    <p class="text-muted">Mostrando los @filas.Count registros más recientes (máximo @MaxFilas).</p>
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Usuario</th>
+                <th>Acción</th>
+                <th>Tabla</th>
+                <th>Registro</th>
+                <th>Antes</th>
+                <th>Después</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var f in filas)
+            {
+                <tr>
+                    <td>@f.Fecha.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                    <td>@(f.Usuario ?? "—")</td>
+                    <td><span class="badge @ColorAccion(f.Accion)">@f.Accion</span></td>
+                    <td>@f.Tabla</td>
+                    <td>@f.RegistroId</td>
+                    <td><code>@f.Antes</code></td>
+                    <td><code>@f.Despues</code></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private const int MaxFilas = 200;
+    private static readonly string[] Acciones =
+        ["INSERT", "UPDATE", "DELETE", "LOGIN", "LOGIN_FALLIDO", "IMPORTAR", "EXPORTAR"];
+
+    private string filtro = "";
+    private List<FilaAuditoria>? filas;
+
+    protected override Task OnInitializedAsync() => CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var consulta = db.Auditorias.AsQueryable();
+        if (!string.IsNullOrEmpty(filtro))
+            consulta = consulta.Where(a => a.Accion == filtro);
+
+        filas = await consulta
+            .OrderByDescending(a => a.Id)
+            .Take(MaxFilas)
+            .Select(a => new FilaAuditoria(
+                a.Fecha,
+                a.Usuario != null ? a.Usuario.NombreUsuario : null,
+                a.Accion, a.Tabla, a.RegistroId, a.ValoresAnteriores, a.ValoresNuevos))
+            .ToListAsync();
+    }
+
+    private static string ColorAccion(string accion) => accion switch
+    {
+        "LOGIN_FALLIDO" => "bg-danger",
+        "UPDATE" or "DELETE" => "bg-warning text-dark",
+        "INSERT" or "IMPORTAR" => "bg-success",
+        "EXPORTAR" => "bg-info text-dark",
+        _ => "bg-secondary"
+    };
+
+    private record FilaAuditoria(DateTime Fecha, string? Usuario, string Accion,
+        string? Tabla, string? RegistroId, string? Antes, string? Despues);
+}

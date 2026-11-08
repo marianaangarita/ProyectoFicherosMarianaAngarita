@@ -4,8 +4,9 @@ using AirTortilla.Web.Data.Dao;
 using AirTortilla.Web.Data.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
+using AirTortilla.Web.Data.Exportacion;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Pqc.Crypto.Lms;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -88,6 +89,37 @@ app.MapPost("/logout", async (HttpContext context) =>
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     return Results.Redirect("/login");
 });
+
+// Exportar: genera el fichero AirTortilla_XX_YYYY_MM_DD.<ext> y lo descarga
+app.MapGet("/exportar/{destino}/{fecha}/{formato}", async (
+    string destino, DateTime fecha, string formato,
+    IReservaDao reservaDao, IDbContextFactory<AirTortillaContext> dbFactory, HttpContext context) =>
+{
+    IExportador exportador;
+    try
+    {
+        exportador = ExportadorFactory.Crear(formato);
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(ex.Message);
+    }
+
+    destino = destino.ToUpperInvariant();
+    var filas = await reservaDao.ObtenerPorDestinoYFechaAsync(destino, fecha);
+    if (filas.Count == 0) return Results.NotFound("No hay reservas para ese destino y fecha.");
+
+    var nombreFichero = $"AirTortilla_{destino}_{fecha:yyyy_MM_dd}.{exportador.Extension}";
+
+    // Trazabilidad: quién exportó qué
+    await using var db = await dbFactory.CreateDbContextAsync();
+    var usuarioId = int.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    Auditor.Registrar(db, usuarioId, "EXPORTAR", "reserva",
+        valoresNuevos: new { Fichero = nombreFichero, Registros = filas.Count });
+    await db.SaveChangesAsync();
+
+    return Results.File(exportador.Exportar(filas), exportador.TipoMime, nombreFichero);
+}).RequireAuthorization();
 
 app.Run();
 

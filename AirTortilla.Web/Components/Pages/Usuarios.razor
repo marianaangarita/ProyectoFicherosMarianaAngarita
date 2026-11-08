@@ -65,6 +65,7 @@
             <th>Fecha de alta</th>
             <th>Creado por</th>
             <th>Último acceso</th>
+            <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
@@ -77,6 +78,21 @@
                 <td>@u.FechaAlta.ToString("dd/MM/yyyy HH:mm")</td>
                 <td>@(u.CreadoPor?.NombreUsuario ?? "Sistema")</td>
                 <td>@(u.UltimoAcceso?.ToString("dd/MM/yyyy HH:mm") ?? "Nunca")</td>
+                <td>
+                    @if (u.Id != usuarioActualId)
+                    {
+                        <form method="post" @formname="@($"estado-{u.Id}")" @onsubmit="() => CambiarEstado(u.Id)">
+                            <AntiforgeryToken />
+                            <button type="submit" class="btn btn-sm @(u.Activo == true ? "btn-outline-danger" : "btn-outline-success")">
+                                @(u.Activo == true ? "Desactivar" : "Activar")
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span class="text-muted">(tú)</span>
+                    }
+                </td>
             </tr>
         }
     </tbody>
@@ -91,10 +107,13 @@
     private List<Usuario> usuarios = [];
     private string? exito;
     private string? error;
+    private int usuarioActualId;
 
     protected override async Task OnInitializedAsync()
     {
         Input ??= new();
+        var estado = await AuthState;
+        usuarioActualId = int.Parse(estado.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         await CargarAsync();
     }
 
@@ -152,6 +171,37 @@
 
         exito = $"Usuario '{nombre}' dado de alta correctamente.";
         Input = new();
+        await CargarAsync();
+    }
+
+    private async Task CambiarEstado(int id)
+    {
+        // Un administrador no puede desactivarse a sí mismo: se quedaría sin acceso
+        if (id == usuarioActualId)
+        {
+            error = "No puedes desactivar tu propia cuenta.";
+            return;
+        }
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var usuario = await db.Usuarios.FindAsync(id);
+        if (usuario is null)
+        {
+            error = "El usuario no existe.";
+            return;
+        }
+
+        var estabaActivo = usuario.Activo == true;
+        usuario.Activo = !estabaActivo;
+
+        // Trazabilidad: valor ANTES y DESPUÉS del cambio
+        Auditor.Registrar(db, usuarioActualId, "UPDATE", "usuario", id.ToString(),
+            valoresAnteriores: new { Activo = estabaActivo },
+            valoresNuevos: new { Activo = !estabaActivo });
+
+        await db.SaveChangesAsync();   // un solo SaveChanges = una sola transacción
+
+        exito = $"Usuario '{usuario.NombreUsuario}' {(estabaActivo ? "desactivado" : "activado")}.";
         await CargarAsync();
     }
 

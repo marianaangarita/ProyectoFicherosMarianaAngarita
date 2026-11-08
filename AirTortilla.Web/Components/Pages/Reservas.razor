@@ -26,6 +26,7 @@ else
                 <th>Fecha</th>
                 <th>Pasajeros</th>
                 <th>Consultar</th>
+                <th>Exportar</th>
             </tr>
         </thead>
         <tbody>
@@ -39,6 +40,14 @@ else
                     <td>
                         <button class="btn btn-sm btn-outline-primary" @onclick="() => Abrir(g, Modo.Total)">Total</button>
                         <button class="btn btn-sm btn-outline-secondary" @onclick="() => Abrir(g, Modo.LineaALinea)">Línea a línea</button>
+                    </td>
+                    <td>
+                        @foreach (var ext in new[] { "csv", "json", "xml", "txt" })
+                        {
+                            <a class="btn btn-sm btn-outline-success me-1"
+                               href="@($"exportar/{g.Destino}/{g.Fecha:yyyy-MM-dd}/{ext}")"
+                               download data-enhance-nav="false">@ext</a>
+                        }
                     </td>
                 </tr>
             }
