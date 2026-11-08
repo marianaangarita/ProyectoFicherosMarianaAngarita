@@ -1,0 +1,275 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="ER AirTortilla" id="er">
+    <mxGraphModel dx="1911" dy="2061" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Rol" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#ffe6cc;strokeColor=#d79b00;rounded=1;arcSize=6;html=1;" value="Rol" vertex="1">
+          <mxGeometry height="74" width="230" x="800" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="c11" parent="Rol" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔑 Id INT" vertex="1">
+          <mxGeometry height="24" width="230" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="c12" parent="Rol" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="◆ Nombre VARCHAR(30)" vertex="1">
+          <mxGeometry height="24" width="230" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Usuario" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#ffe6cc;strokeColor=#d79b00;rounded=1;arcSize=6;html=1;" value="Usuario" vertex="1">
+          <mxGeometry height="218" width="250" x="340" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c13" parent="Usuario" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔑 Id INT" vertex="1">
+          <mxGeometry height="24" width="250" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="c14" parent="Usuario" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="◆ NombreUsuario VARCHAR(50)" vertex="1">
+          <mxGeometry height="24" width="250" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c15" parent="Usuario" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="PasswordHash VARCHAR(100)" vertex="1">
+          <mxGeometry height="24" width="250" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="c16" parent="Usuario" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔗 RolId INT" vertex="1">
+          <mxGeometry height="24" width="250" y="98" as="geometry" />
+        </mxCell>
+        <mxCell id="c17" parent="Usuario" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="Activo BOOLEAN" vertex="1">
+          <mxGeometry height="24" width="250" y="122" as="geometry" />
+        </mxCell>
+        <mxCell id="c18" parent="Usuario" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="FechaAlta DATETIME" vertex="1">
+          <mxGeometry height="24" width="250" y="146" as="geometry" />
+        </mxCell>
+        <mxCell id="c19" parent="Usuario" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔗 CreadoPorId INT (nullable)" vertex="1">
+          <mxGeometry height="24" width="250" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="c20" parent="Usuario" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="UltimoAcceso DATETIME" vertex="1">
+          <mxGeometry height="24" width="250" y="194" as="geometry" />
+        </mxCell>
+        <mxCell id="Auditoria" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=1;arcSize=6;html=1;" value="Auditoria" vertex="1">
+          <mxGeometry height="218" width="230" x="800" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="c21" parent="Auditoria" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔑 Id BIGINT" vertex="1">
+          <mxGeometry height="24" width="230" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="c22" parent="Auditoria" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔗 UsuarioId INT" vertex="1">
+          <mxGeometry height="24" width="230" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c23" parent="Auditoria" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="Fecha DATETIME" vertex="1">
+          <mxGeometry height="24" width="230" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="c24" parent="Auditoria" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="Accion ENUM" vertex="1">
+          <mxGeometry height="24" width="230" y="98" as="geometry" />
+        </mxCell>
+        <mxCell id="c25" parent="Auditoria" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="Tabla VARCHAR(50)" vertex="1">
+          <mxGeometry height="24" width="230" y="122" as="geometry" />
+        </mxCell>
+        <mxCell id="c26" parent="Auditoria" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="RegistroId VARCHAR(50)" vertex="1">
+          <mxGeometry height="24" width="230" y="146" as="geometry" />
+        </mxCell>
+        <mxCell id="c27" parent="Auditoria" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="ValoresAnteriores JSON" vertex="1">
+          <mxGeometry height="24" width="230" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="c28" parent="Auditoria" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="ValoresNuevos JSON" vertex="1">
+          <mxGeometry height="24" width="230" y="194" as="geometry" />
+        </mxCell>
+        <mxCell id="Pasajero" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;arcSize=6;html=1;" value="Pasajero" vertex="1">
+          <mxGeometry height="146" width="260" x="40" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="c29" parent="Pasajero" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔑 Id INT" vertex="1">
+          <mxGeometry height="24" width="260" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="c30" parent="Pasajero" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="◆ DocumentoIdentidad VARCHAR(20)" vertex="1">
+          <mxGeometry height="24" width="260" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c31" parent="Pasajero" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="Nombre VARCHAR(60)" vertex="1">
+          <mxGeometry height="24" width="260" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="c32" parent="Pasajero" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="PrimerApellido VARCHAR(60)" vertex="1">
+          <mxGeometry height="24" width="260" y="98" as="geometry" />
+        </mxCell>
+        <mxCell id="c33" parent="Pasajero" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="SegundoApellido VARCHAR(60)" vertex="1">
+          <mxGeometry height="24" width="260" y="122" as="geometry" />
+        </mxCell>
+        <mxCell id="ReservaPasajero" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;arcSize=6;html=1;" value="ReservaPasajero" vertex="1">
+          <mxGeometry height="74" width="230" x="350" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="c34" parent="ReservaPasajero" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔑 🔗 ReservaId INT" vertex="1">
+          <mxGeometry height="24" width="230" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="c35" parent="ReservaPasajero" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔑 🔗 PasajeroId INT" vertex="1">
+          <mxGeometry height="24" width="230" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Reserva" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;arcSize=6;html=1;" value="Reserva" vertex="1">
+          <mxGeometry height="146" width="230" x="800" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="c36" parent="Reserva" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔑 Id INT" vertex="1">
+          <mxGeometry height="24" width="230" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="c37" parent="Reserva" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="◆ Localizador VARCHAR(20)" vertex="1">
+          <mxGeometry height="24" width="230" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c38" parent="Reserva" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔗 Origen CHAR(2)" vertex="1">
+          <mxGeometry height="24" width="230" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="c39" parent="Reserva" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔗 Destino CHAR(2)" vertex="1">
+          <mxGeometry height="24" width="230" y="98" as="geometry" />
+        </mxCell>
+        <mxCell id="c40" parent="Reserva" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="FechaReserva DATE" vertex="1">
+          <mxGeometry height="24" width="230" y="122" as="geometry" />
+        </mxCell>
+        <mxCell id="Pais" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;arcSize=6;html=1;" value="Pais" vertex="1">
+          <mxGeometry height="50" width="230" x="800" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="c41" parent="Pais" style="text;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="🔑 CodigoIso CHAR(2)" vertex="1">
+          <mxGeometry height="24" width="230" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="r1" parent="1" style="rhombus;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#333333;" value="tiene" vertex="1">
+          <mxGeometry height="56" width="110" x="625" y="62" as="geometry" />
+        </mxCell>
+        <mxCell id="c42" edge="1" parent="1" source="Rol" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;" target="r1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c43" connectable="0" parent="c42" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c44" edge="1" parent="1" source="Usuario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;exitX=1;exitY=0.15;" target="r1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c45" connectable="0" parent="c44" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="N" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="r2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#333333;" value="genera" vertex="1">
+          <mxGeometry height="56" width="110" x="625" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="c46" edge="1" parent="1" source="Usuario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;exitX=1;exitY=0.85;" target="r2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c47" connectable="0" parent="c46" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c48" edge="1" parent="1" source="Auditoria" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;exitX=0;exitY=0.3;" target="r2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c49" connectable="0" parent="c48" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="N" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="r3" parent="1" style="rhombus;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#333333;" value="da de alta" vertex="1">
+          <mxGeometry height="50" width="120" x="340" y="-60" as="geometry" />
+        </mxCell>
+        <mxCell id="c50" edge="1" parent="1" source="Usuario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;endArrow=block;endFill=1;exitX=0;exitY=0.3;entryX=0;entryY=0.5;" target="r3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="310" y="94" />
+              <mxPoint x="310" y="-35" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c51" connectable="0" parent="c50" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="1&amp;nbsp;" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c52" edge="1" parent="1" source="Usuario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;startArrow=block;startFill=1;exitX=0.75;exitY=0;entryX=1;entryY=0.5;" target="r3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="527" y="-35" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c53" connectable="0" parent="c52" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="N&amp;nbsp;" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="r4" parent="1" style="rhombus;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#333333;" value="figura en" vertex="1">
+          <mxGeometry height="56" width="110" x="115" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="c54" edge="1" parent="1" source="Pasajero" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;exitX=0.5;exitY=1;" target="r4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c55" connectable="0" parent="c54" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c56" edge="1" parent="1" source="ReservaPasajero" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;exitX=0;exitY=0.6;" target="r4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c57" connectable="0" parent="c56" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="N" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="r5" parent="1" style="rhombus;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#333333;" value="incluye" vertex="1">
+          <mxGeometry height="56" width="100" x="640" y="615" as="geometry" />
+        </mxCell>
+        <mxCell id="c58" edge="1" parent="1" source="Reserva" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;exitX=0;exitY=0.25;" target="r5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c59" connectable="0" parent="c58" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c60" edge="1" parent="1" source="ReservaPasajero" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;exitX=1;exitY=0.6;" target="r5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c61" connectable="0" parent="c60" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="N" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="r6" parent="1" style="rhombus;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#333333;" value="es origen de" vertex="1">
+          <mxGeometry height="50" width="120" x="740" y="765" as="geometry" />
+        </mxCell>
+        <mxCell id="c62" edge="1" parent="1" source="Pais" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;exitX=0.25;exitY=0;entryX=0.5;entryY=1;" target="r6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c63" connectable="0" parent="c62" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c64" edge="1" parent="1" source="Reserva" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;exitX=0.25;exitY=1;entryX=0.5;entryY=0;" target="r6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c65" connectable="0" parent="c64" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="N" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="r7" parent="1" style="rhombus;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#333333;" value="es destino de" vertex="1">
+          <mxGeometry height="50" width="120" x="880" y="765" as="geometry" />
+        </mxCell>
+        <mxCell id="c66" edge="1" parent="1" source="Pais" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;exitX=0.75;exitY=0;entryX=0.5;entryY=1;" target="r7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c67" connectable="0" parent="c66" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c68" edge="1" parent="1" source="Reserva" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeWidth=1.5;exitX=0.75;exitY=1;entryX=0.5;entryY=0;" target="r7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c69" connectable="0" parent="c68" style="edgeLabel;html=1;fontSize=14;fontStyle=1;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="N" vertex="1">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nota" parent="1" style="shape=note;whiteSpace=wrap;html=1;align=left;spacingLeft=8;fillColor=#fff2cc;strokeColor=#d6b656;size=14;" value="&lt;b&gt;¿Por qué existe ReservaPasajero?&lt;/b&gt;&lt;br&gt;Un pasajero viaja en VARIAS reservas y una reserva incluye VARIOS pasajeros (N:M).&lt;br&gt;MySQL no puede guardarlo directamente, así que se parte en dos relaciones 1:N.&lt;br&gt;Cada fila = «este pasajero figura en esta reserva»." vertex="1">
+          <mxGeometry height="110" width="330" x="330" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="leg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacingLeft=8;fillColor=#f5f5f5;strokeColor=#666666;" value="&lt;b&gt;Leyenda&lt;/b&gt;&lt;br&gt;🔑 Clave primaria (PK)&lt;br&gt;🔗 Clave foránea (FK)&lt;br&gt;◆ Único (UNIQUE)&lt;br&gt;&lt;span style=&#39;color:#b85450&#39;&gt;&lt;b&gt;1 / N / M&lt;/b&gt;&lt;/span&gt; = cardinalidad&lt;br&gt;Azul: reservas · Naranja: seguridad · Morado: auditoría" vertex="1">
+          <mxGeometry height="130" width="250" x="40" y="-60" as="geometry" />
+        </mxCell>
+        <mxCell id="tit" parent="1" style="text;html=1;fontSize=20;fontStyle=1;" value="AirTortilla – Modelo Entidad-Relación (Entrega 2)" vertex="1">
+          <mxGeometry height="30" width="520" x="40" y="-100" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

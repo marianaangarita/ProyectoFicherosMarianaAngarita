@@ -12,7 +12,7 @@ public partial class AirTortillaContext : DbContext
     {
     }
 
-    public virtual DbSet<Auditoria> Auditoria { get; set; }
+    public virtual DbSet<Auditoria> Auditorias { get; set; }
 
     public virtual DbSet<Pais> Paises { get; set; }
 

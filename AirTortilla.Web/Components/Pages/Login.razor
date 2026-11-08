@@ -25,13 +25,13 @@
         <div class="mb-3">
             <label class="form-label">Usuario</label>
             <InputText @bind-Value="Input!.NombreUsuario" class="form-control" autocomplete="username" />
-            <ValidationMessage For="() => Input.NombreUsuario" />
+            <ValidationMessage For="() => Input!.NombreUsuario" />
         </div>
 
         <div class="mb-3">
             <label class="form-label">Contraseña</label>
             <InputText type="password" @bind-Value="Input!.Password" class="form-control" autocomplete="current-password" />
-            <ValidationMessage For="() => Input.Password" />
+            <ValidationMessage For="() => Input!.Password" />
         </div>
 
         <button type="submit" class="btn btn-primary w-100">Entrar</button>
@@ -61,11 +61,17 @@
         if (usuario is null || usuario.Activo != true ||
             !BCrypt.Net.BCrypt.Verify(Input!.Password, usuario.PasswordHash))
         {
+            // Se guarda QUÉ usuario se intentó, NUNCA la contraseña escrita
+            Auditor.Registrar(db, usuario?.Id, "LOGIN_FALLIDO", "usuario", usuario?.Id.ToString(),
+                valoresNuevos: new { NombreIntentado = Input.NombreUsuario });
+            await db.SaveChangesAsync();
+
             error = "Usuario o contraseña incorrectos.";
             return;
         }
 
         usuario.UltimoAcceso = DateTime.Now;
+        Auditor.Registrar(db, usuario.Id, "LOGIN", "usuario", usuario.Id.ToString());
         await db.SaveChangesAsync();
 
         // La "pulsera": datos que viajan cifrados en la cookie

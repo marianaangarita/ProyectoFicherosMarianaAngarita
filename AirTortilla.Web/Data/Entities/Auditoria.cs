@@ -7,7 +7,7 @@ public partial class Auditoria
 {
     public long Id { get; set; }
 
-    public int UsuarioId { get; set; }
+    public int? UsuarioId { get; set; }
 
     public DateTime Fecha { get; set; }
 
@@ -21,5 +21,5 @@ public partial class Auditoria
 
     public string? ValoresNuevos { get; set; }
 
-    public virtual Usuario Usuario { get; set; } = null!;
+    public virtual Usuario? Usuario { get; set; }
 }
