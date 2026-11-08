@@ -1,4 +1,5 @@
 @page "/login"
+@attribute [AllowAnonymous]
 @using System.ComponentModel.DataAnnotations
 @using System.Security.Claims
 @using AirTortilla.Web.Data
@@ -23,13 +24,13 @@
 
         <div class="mb-3">
             <label class="form-label">Usuario</label>
-            <InputText @bind-Value="Input.NombreUsuario" class="form-control" autocomplete="username" />
+            <InputText @bind-Value="Input!.NombreUsuario" class="form-control" autocomplete="username" />
             <ValidationMessage For="() => Input.NombreUsuario" />
         </div>
 
         <div class="mb-3">
             <label class="form-label">Contraseña</label>
-            <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" />
+            <InputText type="password" @bind-Value="Input!.Password" class="form-control" autocomplete="current-password" />
             <ValidationMessage For="() => Input.Password" />
         </div>
 
@@ -40,11 +41,13 @@
 @code {
     [CascadingParameter] public HttpContext HttpContext { get; set; } = default!;
 
-    [SupplyParameterFromForm] private LoginModel Input { get; set; } = new();
+    [SupplyParameterFromForm] private LoginModel? Input { get; set; }
 
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
     private string? error;
+
+    protected override void OnInitialized() => Input ??= new();
 
     private async Task IniciarSesion()
     {
@@ -52,11 +55,11 @@
 
         var usuario = await db.Usuarios
             .Include(u => u.Rol)
-            .FirstOrDefaultAsync(u => u.NombreUsuario == Input.NombreUsuario);
+            .FirstOrDefaultAsync(u => u.NombreUsuario == Input!.NombreUsuario);
 
         // Mismo mensaje para "no existe", "inactivo" y "contraseña mal"
         if (usuario is null || usuario.Activo != true ||
-            !BCrypt.Net.BCrypt.Verify(Input.Password, usuario.PasswordHash))
+            !BCrypt.Net.BCrypt.Verify(Input!.Password, usuario.PasswordHash))
         {
             error = "Usuario o contraseña incorrectos.";
             return;
