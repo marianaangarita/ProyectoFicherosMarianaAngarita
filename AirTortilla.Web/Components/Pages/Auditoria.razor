@@ -16,7 +16,7 @@
         <option value="">Todas</option>
         @foreach (var accion in Acciones)
         {
-            <option value="@accion">@accion</option>
+            <option value="@accion">@Etiqueta(accion, null)</option>
         }
     </select>
 </div>
@@ -50,7 +50,7 @@ else
                 <tr>
                     <td>@f.Fecha.ToString("dd/MM/yyyy HH:mm:ss")</td>
                     <td>@(f.Usuario ?? "—")</td>
-                    <td><span class="badge @ColorAccion(f.Accion)">@f.Accion</span></td>
+                    <td><span class="badge @ColorAccion(f.Accion)" title="@f.Accion">@Etiqueta(f.Accion, f.Tabla)</span></td>
                     <td>@f.Tabla</td>
                     <td>@f.RegistroId</td>
                     <td><code>@f.Antes</code></td>
@@ -96,6 +96,22 @@ else
         "INSERT" or "IMPORTAR" => "bg-success",
         "EXPORTAR" => "bg-info text-dark",
         _ => "bg-secondary"
+    };
+
+    // Los códigos técnicos se guardan en la BD; aquí se traducen para quien no es técnico
+    private static string Etiqueta(string accion, string? tabla) => (accion, tabla) switch
+    {
+        ("INSERT", "usuario") => "Alta de usuario",
+        ("INSERT", "reserva") => "Alta de reserva",
+        ("INSERT", _) => "Alta",
+        ("UPDATE", "usuario") => "Modificación de usuario",
+        ("UPDATE", _) => "Modificación",
+        ("DELETE", _) => "Eliminación",
+        ("LOGIN", _) => "Inicio de sesión",
+        ("LOGIN_FALLIDO", _) => "Acceso fallido",
+        ("IMPORTAR", _) => "Importación CSV",
+        ("EXPORTAR", _) => "Exportación de fichero",
+        _ => accion
     };
 
     private record FilaAuditoria(DateTime Fecha, string? Usuario, string Accion,
