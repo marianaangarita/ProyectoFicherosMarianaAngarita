@@ -63,7 +63,7 @@
         {
             // Se guarda QUÉ usuario se intentó, NUNCA la contraseña escrita
             Auditor.Registrar(db, usuario?.Id, "LOGIN_FALLIDO", "usuario", usuario?.Id.ToString(),
-                valoresNuevos: new { NombreIntentado = Input.NombreUsuario });
+                valoresNuevos: new { NombreIntentado = Input!.NombreUsuario });
             await db.SaveChangesAsync();
 
             error = "Usuario o contraseña incorrectos.";

@@ -1,0 +1,171 @@
+﻿@page "/usuarios"
+@attribute [Authorize(Roles = "Administrador")]
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using AirTortilla.Web.Data
+@using AirTortilla.Web.Data.Entities
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AirTortillaContext> DbFactory
+
+<PageTitle>Usuarios</PageTitle>
+
+<h1>Gestión de usuarios</h1>
+
+<h2 class="h4 mt-4">Dar de alta un usuario</h2>
+
+@if (exito is not null)
+{
+    <div class="alert alert-success">@exito</div>
+}
+@if (error is not null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<div style="max-width: 400px;">
+    <EditForm Model="Input" method="post" OnValidSubmit="Crear" FormName="alta-usuario">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label class="form-label">Nombre de usuario</label>
+            <InputText @bind-Value="Input!.NombreUsuario" class="form-control" autocomplete="off" />
+            <ValidationMessage For="() => Input!.NombreUsuario" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Contraseña inicial</label>
+            <InputText type="password" @bind-Value="Input!.Password" class="form-control" autocomplete="new-password" />
+            <ValidationMessage For="() => Input!.Password" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Rol</label>
+            <InputSelect @bind-Value="Input!.RolId" class="form-select">
+                <option value="0">-- Elige un rol --</option>
+                @foreach (var rol in roles)
+                {
+                    <option value="@rol.Id">@rol.Nombre</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => Input!.RolId" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Dar de alta</button>
+    </EditForm>
+</div>
+
+<h2 class="h4 mt-5">Usuarios registrados</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Activo</th>
+            <th>Fecha de alta</th>
+            <th>Creado por</th>
+            <th>Último acceso</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in usuarios)
+        {
+            <tr>
+                <td>@u.NombreUsuario</td>
+                <td>@u.Rol.Nombre</td>
+                <td>@(u.Activo == true ? "Sí" : "No")</td>
+                <td>@u.FechaAlta.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@(u.CreadoPor?.NombreUsuario ?? "Sistema")</td>
+                <td>@(u.UltimoAcceso?.ToString("dd/MM/yyyy HH:mm") ?? "Nunca")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> AuthState { get; set; } = default!;
+
+    [SupplyParameterFromForm] private AltaModel? Input { get; set; }
+
+    private List<Rol> roles = [];
+    private List<Usuario> usuarios = [];
+    private string? exito;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        roles = await db.Roles.OrderBy(r => r.Nombre).ToListAsync();
+        usuarios = await db.Usuarios
+            .Include(u => u.Rol)
+            .Include(u => u.CreadoPor)
+            .OrderBy(u => u.NombreUsuario)
+            .ToListAsync();
+    }
+
+    private async Task Crear()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var nombre = Input!.NombreUsuario.Trim();
+
+        if (await db.Usuarios.AnyAsync(u => u.NombreUsuario == nombre))
+        {
+            error = $"Ya existe un usuario llamado '{nombre}'.";
+            return;
+        }
+        if (!await db.Roles.AnyAsync(r => r.Id == Input.RolId))
+        {
+            error = "El rol elegido no es válido.";
+            return;
+        }
+
+        // Quién está dando de alta: el Id viene de la cookie de sesión
+        var estado = await AuthState;
+        var adminId = int.Parse(estado.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        // Transacción: o se guardan usuario y auditoría, o ninguno de los dos
+        await using var transaccion = await db.Database.BeginTransactionAsync();
+
+        var nuevo = new Usuario
+        {
+            NombreUsuario = nombre,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(Input.Password),
+            RolId = Input.RolId,
+            Activo = true,
+            FechaAlta = DateTime.Now,
+            CreadoPorId = adminId
+        };
+        db.Usuarios.Add(nuevo);
+        await db.SaveChangesAsync();   // primero se guarda para que MySQL le asigne su Id
+
+        Auditor.Registrar(db, adminId, "INSERT", "usuario", nuevo.Id.ToString(),
+            valoresNuevos: new { nuevo.NombreUsuario, nuevo.RolId, nuevo.Activo });   // sin el hash
+        await db.SaveChangesAsync();
+
+        await transaccion.CommitAsync();
+
+        exito = $"Usuario '{nombre}' dado de alta correctamente.";
+        Input = new();
+        await CargarAsync();
+    }
+
+    private sealed class AltaModel
+    {
+        [Required(ErrorMessage = "Introduce un nombre de usuario.")]
+        [StringLength(50, MinimumLength = 3, ErrorMessage = "Entre 3 y 50 caracteres.")]
+        public string NombreUsuario { get; set; } = "";
+
+        [Required(ErrorMessage = "Introduce una contraseña.")]
+        [MinLength(8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres.")]
+        public string Password { get; set; } = "";
+
+        [Range(1, int.MaxValue, ErrorMessage = "Elige un rol.")]
+        public int RolId { get; set; }
+    }
+}
