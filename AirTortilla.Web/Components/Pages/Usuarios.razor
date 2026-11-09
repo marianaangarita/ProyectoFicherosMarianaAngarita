@@ -194,12 +194,12 @@
         var estabaActivo = usuario.Activo == true;
         usuario.Activo = !estabaActivo;
 
-        // Trazabilidad: valor ANTES y DESPUÉS del cambio
+        
         Auditor.Registrar(db, usuarioActualId, "UPDATE", "usuario", id.ToString(),
             valoresAnteriores: new { Activo = estabaActivo },
             valoresNuevos: new { Activo = !estabaActivo });
 
-        await db.SaveChangesAsync();   // un solo SaveChanges = una sola transacción
+        await db.SaveChangesAsync();   
 
         exito = $"Usuario '{usuario.NombreUsuario}' {(estabaActivo ? "desactivado" : "activado")}.";
         await CargarAsync();

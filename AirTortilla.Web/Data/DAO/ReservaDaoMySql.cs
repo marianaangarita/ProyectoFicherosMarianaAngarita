@@ -15,7 +15,7 @@ public class ReservaDaoMySql(IDbContextFactory<AirTortillaContext> dbFactory) : 
         var avisos = new List<string>();
         await using var db = await dbFactory.CreateDbContextAsync();
 
-        // 1. Cargar de golpe lo que necesitamos comprobar (evita una consulta por fila)
+        
         var paises = (await db.Paises.Select(p => p.CodigoIso).ToListAsync()).ToHashSet();
 
         var localizadores = filas.Select(f => f.Localizador).Distinct().ToList();
@@ -34,7 +34,7 @@ public class ReservaDaoMySql(IDbContextFactory<AirTortillaContext> dbFactory) : 
         var reservasNuevas = new List<Reserva>();
         int pasajerosNuevos = 0;
 
-        // 2. Una reserva por localizador
+        
         foreach (var grupo in filas.GroupBy(f => f.Localizador))
         {
             var primera = grupo.First();
@@ -74,10 +74,10 @@ public class ReservaDaoMySql(IDbContextFactory<AirTortillaContext> dbFactory) : 
                         PrimerApellido = fila.PrimerApellido,
                         SegundoApellido = string.IsNullOrWhiteSpace(fila.SegundoApellido) ? null : fila.SegundoApellido
                     };
-                    pasajeros[fila.DocumentoIdentidad] = pasajero;   // si sale en otra reserva del CSV, se reutiliza
+                    pasajeros[fila.DocumentoIdentidad] = pasajero;   
                     pasajerosNuevos++;
                 }
-                reserva.Pasajeros.Add(pasajero);   // EF crea la fila en ReservaPasajero
+                reserva.Pasajeros.Add(pasajero);   
             }
 
             if (grupo.Count() != reserva.Pasajeros.Count)
@@ -87,9 +87,9 @@ public class ReservaDaoMySql(IDbContextFactory<AirTortillaContext> dbFactory) : 
             reservasNuevas.Add(reserva);
         }
 
-        await db.SaveChangesAsync();   // MySQL asigna los Id
+        await db.SaveChangesAsync();   
 
-        // 3. Auditoría: una fila por reserva creada + un resumen de la importación
+        
         foreach (var r in reservasNuevas)
         {
             Auditor.Registrar(db, usuarioId, "INSERT", "reserva", r.Id.ToString(), valoresNuevos: new
