@@ -1,6 +1,4 @@
 # AirTortilla · Gestión de reservas
----
-
 ## Índice
 
 1. [Objetivos de la entrega 2](#objetivos-de-la-entrega-2)
