@@ -90,7 +90,7 @@
             var estado = await AuthState;
             var usuarioId = int.Parse(estado.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            resultado = await ReservaDao.ImportarAsync(filas, usuarioId);
+            resultado = await ReservaDao.ImportarAsync(filas, usuarioId, avisos.Count);
             avisosLectura = avisos;
         }
         catch (Exception ex)

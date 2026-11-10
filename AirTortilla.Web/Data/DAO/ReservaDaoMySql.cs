@@ -10,7 +10,7 @@ namespace AirTortilla.Web.Data.Dao;
 /// </summary>
 public class ReservaDaoMySql(IDbContextFactory<AirTortillaContext> dbFactory) : IReservaDao
 {
-    public async Task<ResultadoImportacion> ImportarAsync(IReadOnlyList<ReservasDTO> filas, int usuarioId)
+    public async Task<ResultadoImportacion> ImportarAsync(IReadOnlyList<ReservasDTO> filas, int usuarioId, int avisosLectura = 0)
     {
         var avisos = new List<string>();
         await using var db = await dbFactory.CreateDbContextAsync();
@@ -103,10 +103,12 @@ public class ReservaDaoMySql(IDbContextFactory<AirTortillaContext> dbFactory) : 
         }
         Auditor.Registrar(db, usuarioId, "IMPORTAR", "reserva", valoresNuevos: new
         {
-            FilasValidas = filas.Count,
+            FilasValidasFormato = filas.Count,
             ReservasImportadas = reservasNuevas.Count,
             PasajerosNuevos = pasajerosNuevos,
-            Avisos = avisos.Count
+            AvisosFormato = avisosLectura,        
+            AvisosDatos = avisos.Count,          
+            AvisosTotales = avisosLectura + avisos.Count
         });
         await db.SaveChangesAsync();
 

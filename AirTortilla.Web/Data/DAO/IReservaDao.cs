@@ -9,7 +9,7 @@ namespace AirTortilla.Web.Data.Dao;
 public interface IReservaDao
 {
     /// <summary>Guarda en la base de datos las filas leídas de un CSV.</summary>
-    Task<ResultadoImportacion> ImportarAsync(IReadOnlyList<ReservasDTO> filas, int usuarioId);
+    Task<ResultadoImportacion> ImportarAsync(IReadOnlyList<ReservasDTO> filas, int usuarioId, int avisosLectura = 0);
 
     /// <summary>Lista de combinaciones destino + fecha, con su número de pasajeros (equivale a "qué ficheros hay").</summary>
     Task<List<ResumenGrupo>> ObtenerGruposAsync();
