@@ -1,0 +1,21 @@
+﻿@page "/"
+
+<PageTitle>AirTortilla</PageTitle>
+
+<h1>AirTortilla · Gestión de reservas</h1>
+
+<AuthorizeView>
+    <p>
+        Hola, <b>@context.User.Identity?.Name</b>
+        (@(context.User.IsInRole("Administrador") ? "Administrador" : "Empleado")).
+    </p>
+</AuthorizeView>
+
+<ul class="list-unstyled mt-4">
+    <li class="mb-3"><a href="importar"><b>Importar CSV</b></a> · Cargar reservas desde un fichero CSV a la base de datos.</li>
+    <li class="mb-3"><a href="reservas"><b>Reservas</b></a> · Consultar por destino y fecha (total o línea a línea) y exportar a CSV, JSON, XML o TXT.</li>
+    <AuthorizeView Roles="Administrador">
+        <li class="mb-3"><a href="usuarios"><b>Usuarios</b></a> · Dar de alta, activar y desactivar usuarios.</li>
+        <li class="mb-3"><a href="auditoria"><b>Auditoría</b></a> · Registro de accesos y modificaciones.</li>
+    </AuthorizeView>
+</ul>

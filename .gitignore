@@ -363,7 +363,10 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # Mis reglas personalizadas
-*.xml
-*.txt
-*.json
+# Ficheros generados por la exportación (entrega 1 y 2)
+AirTortilla_*.xml
+AirTortilla_*.txt
+AirTortilla_*.json
+AirTortilla_*.csv
+# CSV de prueba: no se suben (la estructura se documenta en el README)
 *.csv
