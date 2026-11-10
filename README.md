@@ -5,7 +5,7 @@ Práctica de **Acceso a Datos (DAM)**. Sistema de gestión de reservas de la aer
 - **Entrega 1:** aplicación de consola en C# que leía un CSV de reservas y lo dividía en ficheros por país de destino y fecha.
 - **Entrega 2 (actual):** migración a **aplicación web (Blazor)** con **base de datos relacional (MySQL)**, inicio de sesión, gestión de usuarios por rol y trazabilidad de las modificaciones.
 
-> El proyecto de consola de la entrega 1 se conserva en la solución (`ProyectoFicherosMarianaAngarita/`) como referencia de la migración. El proyecto activo es `AirTortilla.Web/`.
+> El proyecto de consola de la entrega 1 se ha retirado del repositorio al completarse la migración. Su código sigue disponible en el historial de Git (Pull Request #1). El proyecto activo es `AirTortilla.Web/`.
 
 ---
 
@@ -53,6 +53,7 @@ Además, por requisito legal, toda la infraestructura de datos se migra a una **
 | Persistencia | Ficheros (CSV/JSON/XML/TXT) | **MySQL 8** | Requisito legal de base de datos relacional. |
 | Acceso a datos | `StreamReader` / `File.*` | **Entity Framework Core 10** + `MySql.EntityFrameworkCore` (proveedor oficial de Oracle) | ORM: consultas en C# traducidas a SQL, menos código repetitivo. |
 | Seguridad | — | Cookie de autenticación, roles, **BCrypt** | Nuevas User Stories US1 y US2. |
+| Despliegue | `dotnet run` | **Docker** + `docker compose` (MySQL 8.4 + aplicación) | Que cualquiera pueda ejecutar el proyecto sin instalar .NET ni MySQL. |
 
 > **Nota técnica:** no se usa el proveedor Pomelo (el más habitual en tutoriales) porque, a fecha de esta entrega, no tiene versión compatible con EF Core 10.
 
@@ -72,7 +73,7 @@ Además, por requisito legal, toda la infraestructura de datos se migra a una **
 
 ### Código reutilizado
 
-- `ReservasDTO` (con `GetCsvHeader`, `ToCsvLine`, `ToTxtLine`) se reutiliza sin cambios de lógica para transportar los datos y generar los ficheros exportados.
+- `ReservasDTO` (con `GetCsvHeader`, `ToCsvLine`, `ToTxtLine`) se trasladó al proyecto web sin cambios de lógica para transportar los datos y generar los ficheros exportados.
 - La lógica de lectura y validación del CSV se adapta a `LectorCsvReservas` (lee de un `Stream` subido en lugar de una ruta; avisos en lista en lugar de `Console.WriteLine`).
 - La lógica de los cuatro formatos de `GenerarFicheros` se reparte en cuatro clases exportadoras (patrón Factory).
 
@@ -101,6 +102,9 @@ AirTortilla.Web/
 database/
 ├── airtortilla_schema.sql Script de creación de la base de datos
 └── AirTortilla_ER.drawio  Diagrama entidad-relación (editable)
+docker-compose.yml         Contenedores MySQL + aplicación
+.env                       Contraseñas de demostración para Docker
+AirTortilla.Web/Dockerfile Cómo se compila la aplicación dentro de Docker
 ```
 
 ---
@@ -171,7 +175,7 @@ Cada User Story se descompone en tareas con un **criterio de aceptación verific
 | 3.2 | Componente reutilizable `Auditor` | Toda operación que modifica datos llama a `Auditor.Registrar` dentro del mismo `SaveChanges` | ✅ |
 | 3.3 | Auditar altas | Alta de usuario y cada reserva importada generan una fila `INSERT` | ✅ |
 | 3.4 | Auditar modificaciones con antes/después | Desactivar un usuario genera `UPDATE` con `{"Activo": true}` → `{"Activo": false}` | ✅ |
-| 3.5 | Auditar importaciones y exportaciones | Cada importación genera `IMPORTAR` con el resumen; cada descarga genera `EXPORTAR` con el nombre del fichero | ✅ |
+| 3.5 | Auditar importaciones y exportaciones | Cada importación genera `IMPORTAR` con el resumen (reservas, pasajeros nuevos, avisos de formato, avisos de datos y total); cada descarga genera `EXPORTAR` con el nombre del fichero | ✅ |
 | 3.6 | Página de auditoría (solo Administrador) | `/auditoria` muestra los 200 registros más recientes, filtrables por acción, con etiquetas legibles ("Modificación de usuario") | ✅ |
 | 3.7 | Auditoría de solo lectura en la aplicación | No existe ninguna opción para editar o borrar registros de auditoría | ✅ |
 
@@ -184,7 +188,7 @@ Cada User Story se descompone en tareas con un **criterio de aceptación verific
 | M.3 | Importación idempotente | Importar dos veces el mismo CSV no duplica reservas ni pasajeros | ✅ |
 | M.4 | Consulta TOTAL y LÍNEA A LÍNEA | Mismo comportamiento que las opciones 2 y 3 de la consola, incluidos "Fin del fichero" y "Lectura interrumpida por el usuario" | ✅ |
 | M.5 | Exportar en 4 formatos | Se descarga `AirTortilla_XX_YYYY_MM_DD.<ext>` con el mismo contenido que generaba la entrega 1 | ✅ |
-| M.6 | Contenedores (Docker) | — | ⏳ No crítico, pendiente |
+| M.6 | Contenedores (Docker) | En un equipo con solo Docker Desktop, `docker compose up -d --build` deja la aplicación funcionando en `http://localhost:8080` con la base de datos creada | ✅ |
 
 ---
 
@@ -202,6 +206,7 @@ Cada User Story se descompone en tareas con un **criterio de aceptación verific
 | **Antiforgery token** en formularios y logout por `POST` | Protección frente a CSRF (otra web no puede cerrar la sesión ni enviar formularios en tu nombre). |
 | **Validación de `ReturnUrl`** | Solo se redirige a rutas internas (evita redirecciones a webs externas tras el login). |
 | **User-secrets** | La cadena de conexión y la contraseña del admin inicial no están en el repositorio. |
+| **Puerto de MySQL en Docker solo local** (`127.0.0.1:3307`) | Nadie de la misma red puede conectarse a la base de datos del contenedor. |
 | **Usuario de MySQL propio** (`airtortilla_app`) | La aplicación no usa `root`; solo tiene `SELECT, INSERT, UPDATE, DELETE` sobre `airtortilla`. |
 | **Nunca se audita la contraseña escrita** en un login fallido | Un error tipográfico de la contraseña real no queda registrado. |
 
@@ -228,21 +233,133 @@ En la entrega 1, `GenerarFicheros` tenía un `switch` que decidía el formato **
 
 ## Requisitos y ejecución
 
-### Requisitos
+> **Para evaluar la práctica, usa la opción A (Docker).** No hace falta instalar .NET, MySQL ni Visual Studio: Docker crea la base de datos y arranca la aplicación con un solo comando.
+
+### Opción A · Con Docker (recomendada)
+
+#### Qué necesitas
+
+| Programa | Para qué | ¿Hay que instalarlo? |
+|---|---|---|
+| **Docker Desktop** | Ejecutar la base de datos y la aplicación | Solo si no lo tienes: <https://www.docker.com/products/docker-desktop/> |
+| **GitHub Desktop** | Descargar el proyecto | Solo si no lo tienes (alternativa: descargar el ZIP, ver paso 1) |
+| Un navegador | Usar la aplicación | — |
+
+No necesitas Git, .NET, MySQL ni Visual Studio.
+
+#### Paso 1 · Descargar el proyecto
+
+**Con GitHub Desktop:**
+1. **File → Clone repository...** → pestaña **URL**.
+2. Pega: `https://github.com/marianaangarita/ProyectoFicherosMarianaAngarita`
+3. En **Local path** elige una carpeta **fuera de OneDrive** (por ejemplo `C:\Repos`). OneDrive puede bloquear archivos y provocar errores raros.
+4. Pulsa **Clone**. Se descarga la rama principal (`master`), que contiene la entrega 2.
+
+**Sin GitHub Desktop (ZIP):**
+1. Abre <https://github.com/marianaangarita/ProyectoFicherosMarianaAngarita>.
+2. Botón verde **Code → Download ZIP**.
+3. Descomprime el ZIP en una carpeta fuera de OneDrive.
+
+#### Paso 2 · Abrir Docker Desktop
+
+Ábrelo desde el menú Inicio y espera a que abajo a la izquierda ponga **"Engine running"** (indicador verde).
+
+#### Paso 3 · Abrir una terminal en la carpeta del proyecto
+
+La carpeta correcta es la que contiene el archivo **`docker-compose.yml`**. Cualquiera de estas formas vale:
+
+- **GitHub Desktop:** menú **Repository → Open in Command Prompt** (o *Open in PowerShell*).
+- **Explorador de Windows:** entra en la carpeta del proyecto → clic derecho en un hueco vacío → **Abrir en Terminal**.
+- **VS Code:** **File → Open Folder...** → elige la carpeta del proyecto → menú **Terminal → New Terminal**.
+
+Comprueba que estás en el sitio correcto escribiendo `dir`: debe aparecer `docker-compose.yml`.
+
+#### Paso 4 · Arrancar la aplicación
+
+```
+docker compose up -d --build
+```
+
+- La **primera vez** tarda varios minutos: descarga MySQL y .NET (alrededor de 1 GB). Las siguientes veces son segundos.
+- Docker crea la base de datos, ejecuta el script `database/airtortilla_schema.sql` (tablas, roles y 249 países) y arranca la web.
+
+Espera un minuto y comprueba el estado:
+
+```
+docker compose ps
+```
+
+Debe salir `airtortilla-db` como **Up (healthy)** y `airtortilla-web` como **Up**.
+
+#### Paso 5 · Entrar en la aplicación
+
+Abre **<http://localhost:8080>** e inicia sesión con el administrador de demostración:
+
+| Usuario | Contraseña |
+|---|---|
+| `admin` | `AdminDemo2026` |
+
+#### Paso 6 · Probar
+
+1. **Importar CSV:** crea un archivo `reservas.csv` con el [ejemplo de prueba](#csv-de-prueba-para-copiar-y-pegar) y súbelo.
+2. **Reservas:** consulta un grupo en modalidad *Total* y *Línea a línea*, y expórtalo en los cuatro formatos.
+3. **Usuarios:** da de alta un usuario con rol *Empleado*, cierra sesión y entra con él: no verá *Usuarios* ni *Auditoría*.
+4. **Auditoría** (como `admin`): verás registrados todos los pasos anteriores.
+
+#### Apagar y volver a empezar
+
+| Quiero... | Comando | ¿Se borran los datos? |
+|---|---|---|
+| Apagar la aplicación | `docker compose stop` | No |
+| Volver a encenderla | `docker compose start` | — |
+| Apagar y quitar los contenedores | `docker compose down` | No (quedan en el volumen) |
+| **Empezar de cero** (base de datos vacía) | `docker compose down -v` y después `docker compose up -d --build` | **Sí** |
+
+#### Si algo falla
+
+| Síntoma | Solución |
+|---|---|
+| `docker: command not found` o error de conexión con Docker | Docker Desktop no está abierto o no ha terminado de arrancar. Espera a ver "Engine running". |
+| `no configuration file provided` | La terminal no está en la carpeta del proyecto. Repite el paso 3. |
+| Se cortó el primer arranque (se cerró Docker, se apagó el PC...) | La base de datos se quedó a medias: `docker compose down -v` y vuelve a lanzar `docker compose up -d --build`. |
+| `airtortilla-web` aparece como *Restarting* | Mira el error con `docker compose logs web --tail 50`. Lo más habitual se soluciona con `docker compose down -v` y volviendo a arrancar. |
+| `port is already allocated` (puerto 8080 ocupado) | Otro programa usa el puerto 8080. En `docker-compose.yml`, cambia `"8080:8080"` por `"8081:8080"` y entra en `http://localhost:8081`. |
+| Los botones no responden (por ejemplo, *Importar* no se activa) | Recarga la página con `F5`. Si se reiniciaron los contenedores con la página abierta, se pierde la conexión. |
+
+#### Sobre las contraseñas del archivo `.env`
+
+El archivo `.env` contiene contraseñas **de demostración** (`RootDemo2026`, `AppDemo2026`, `AdminDemo2026`). Están en el repositorio a propósito, para que el proyecto funcione sin configurar nada. Solo sirven para la base de datos que Docker crea **en tu propio ordenador**, que además solo es accesible desde ese ordenador (`127.0.0.1`). No se usan en ningún otro sitio.
+
+#### Qué hace Docker exactamente
+
+`docker-compose.yml` define dos contenedores:
+
+| Contenedor | Imagen | Detalles |
+|---|---|---|
+| `airtortilla-db` | `mysql:8.4` | Ejecuta el script de la base de datos la primera vez, crea el usuario `airtortilla_app`, guarda los datos en el volumen `airtortilla-datos`. Puerto `127.0.0.1:3307` (para conectar Workbench si se quiere). |
+| `airtortilla-web` | Construida con `AirTortilla.Web/Dockerfile` | Compila y publica la aplicación con el SDK de .NET 10 y la ejecuta en el puerto `8080`. Espera a que MySQL esté listo (*healthcheck*). |
+
+Ajustes necesarios para que funcione igual que en Windows:
+- `--lower-case-table-names=1`: MySQL en Linux distingue mayúsculas en los nombres de tabla y en Windows no. Sin esta opción, la aplicación busca `usuario` y la tabla se llama `Usuario`.
+- `TZ: Europe/Madrid`: sin ella, los contenedores usan la hora UTC y la auditoría registraría una hora menos.
+- El `Dockerfile` restaura y publica en un solo paso: si se separan, .NET 10 no incluye `blazor.web.js` y las páginas dejan de ser interactivas.
+
+### Opción B · Sin Docker (para desarrollar)
+
+Para modificar el código con Visual Studio o VS Code.
+
+#### Requisitos
 
 - .NET 10 SDK (`dotnet --version`)
 - MySQL Server 8 y MySQL Workbench
-- Visual Studio 2022 o superior (opcional)
 
-### Paso 1 · Crear la base de datos
+#### 1. Crear la base de datos
 
-En MySQL Workbench, abrir y ejecutar `database/airtortilla_schema.sql` (botón ⚡ "Execute"). Crea la base de datos `airtortilla`, las tablas, los roles y los 249 países.
+En MySQL Workbench, abrir y ejecutar `database/airtortilla_schema.sql` (botón ⚡). Crea la base de datos `airtortilla`, las tablas, los roles y los 249 países.
 
 > ⚠️ El script empieza con `DROP DATABASE IF EXISTS airtortilla`: si se vuelve a ejecutar, **borra todos los datos**.
 
-### Paso 2 · Crear el usuario de la aplicación
-
-En Workbench (elegir una contraseña propia):
+#### 2. Crear el usuario de la aplicación
 
 ```sql
 CREATE USER 'airtortilla_app'@'localhost' IDENTIFIED BY '<contraseña>';
@@ -250,7 +367,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON airtortilla.* TO 'airtortilla_app'@'loca
 FLUSH PRIVILEGES;
 ```
 
-### Paso 3 · Configurar los secretos
+#### 3. Configurar los secretos
 
 Desde la carpeta `AirTortilla.Web/`:
 
@@ -259,22 +376,16 @@ dotnet user-secrets set "ConnectionStrings:AirTortilla" "server=localhost;port=3
 dotnet user-secrets set "AdminInicial:Password" "<contraseña del administrador>"
 ```
 
-Los *user-secrets* se guardan en el perfil de Windows del usuario, fuera del repositorio.
+Los *user-secrets* se guardan en el perfil del usuario de Windows, fuera del repositorio.
 
-### Paso 4 · Ejecutar
+#### 4. Ejecutar
 
 ```
 cd AirTortilla.Web
 dotnet run
 ```
 
-Abrir la dirección que aparece en la terminal (`http://localhost:5223`). En el primer arranque se crea automáticamente el usuario **`admin`** con la contraseña del paso 3.
-
-Si falta algún secreto, la aplicación se detiene con un mensaje que indica cuál.
-
-### Visual Studio
-
-Si al compilar aparece `No se encuentra el archivo de recursos ...\obj\project.assets.json`: clic derecho sobre la solución → **Restaurar paquetes NuGet** → **Compilar → Recompilar solución**. Si el servidor está en marcha desde la terminal, pararlo (`Ctrl+C`) antes de compilar desde Visual Studio, porque bloquea el ejecutable.
+Abrir la dirección que muestra la terminal (`http://localhost:5223`). En el primer arranque se crea el usuario `admin` con la contraseña del paso 3. Si falta algún secreto, la aplicación se detiene con un mensaje que indica cuál.
 
 ---
 
@@ -307,6 +418,48 @@ LOC001,FR,ES,Juan,Perez,Gomez,22222222B,2026-05-14
 LOC002,IT,ES,Maria,Garcia,Lopez,66666666F,2026-05-14
 LOC003,FR,ES,Juan,Perez,Gomez,11111111A,2026-05-15
 ```
+
+### CSV de prueba para copiar y pegar
+
+Los CSV de prueba no se incluyen en el repositorio. Para crear uno:
+
+1. Abre el **Bloc de notas** (o VS Code).
+2. Copia y pega el contenido siguiente.
+3. **Archivo → Guardar como...** → nombre `reservas.csv`, tipo **Todos los archivos**, codificación **UTF-8**.
+
+```csv
+Localizador,Destino,Origen,NombrePasajero,PrimerApellido,SegundoApellido,DocumentoIdentidad,FechaReserva
+LOC001,FR,ES,Juan,Perez,Gomez,11111111A,2026-05-14
+LOC001,FR,ES,Juan,Perez,Gomez,22222222B,2026-05-14
+LOC001,FR,ES,Juan,Perez,Gomez,33333333C,2026-05-14
+LOC001,FR,ES,Juan,Perez,Gomez,44444444D,2026-05-14
+LOC001,FR,ES,Juan,Perez,Gomez,55555555E,2026-05-14
+LOC002,IT,ES,Maria,Garcia,Lopez,66666666F,2026-05-14
+LOC002,IT,ES,Maria,Garcia,Lopez,77777777G,2026-05-14
+LOC003,FR,ES,Ana,Martin,Ruiz,88888888H,2026-05-15
+LOC003,FR,ES,Ana,Martin,Ruiz,99999999J,2026-05-15
+LOC004,FR,ES,Juan,Perez,Gomez,11111111A,2026-05-15
+LOC005,DE,PT,Lucas,Silva,,12345678K,2026-05-16
+LOC006,UK,ES,Peter,Smith,,23456789L,2026-05-16
+LOC007,FR,ES,Laura,Sanz,Gil,34567890M,2026-13-45
+LOC008,FR,ES,Carlos,Ruiz
+LOC009,FR,ES,Elena,Diaz,Mora,45678901N,2026-05-17
+LOC009,IT,ES,Pablo,Diaz,Mora,56789012P,2026-05-17
+```
+
+**Resultado esperado:** 5 reservas importadas, 10 pasajeros nuevos y 4 avisos:
+
+| Fila | Qué comprueba | Resultado |
+|---|---|---|
+| LOC001 | 5 pasajeros que coinciden en nombre, origen y destino | Se importa |
+| LOC004 | El pasajero `11111111A` ya está en LOC001 | Se importa; el pasajero **no** se duplica |
+| LOC005 | Sin segundo apellido | Se importa |
+| LOC006 | `UK` no es un código ISO (Reino Unido es `GB`) | Aviso |
+| LOC007 | Fecha `2026-13-45` no válida | Aviso |
+| LOC008 | Faltan columnas | Aviso |
+| LOC009 | Mismo localizador con dos destinos distintos | Aviso |
+
+Si se importa **otra vez** el mismo archivo, el resultado es 0 reservas importadas: la importación no duplica datos.
 
 ### Reglas de validación
 
@@ -372,6 +525,8 @@ La entrega 2 cumple las tres User Stories y la migración a base de datos relaci
 - **US3:** auditoría de altas, modificaciones (con valores antes/después), accesos, importaciones y exportaciones, consultable desde la aplicación.
 - **Migración:** todas las funciones de la entrega 1 (cargar CSV, dividir por destino y fecha, consultar en modalidad total y línea a línea, exportar a cuatro formatos) funcionan ahora sobre MySQL desde una interfaz web.
 
+- **Docker:** la aplicación y la base de datos se arrancan con un solo comando, sin instalar .NET ni MySQL.
+
 Se han aplicado los patrones **DTO**, **DAO** y **Factory**, y se ha resuelto la limitación de la entrega 1 de tener los códigos ISO escritos en el código.
 
 ### Limitaciones conocidas
@@ -381,17 +536,15 @@ Se han aplicado los patrones **DTO**, **DAO** y **Factory**, y se ha resuelto la
 - La revalidación de la sesión se hace en cada **petición HTTP**. Si el usuario desactivado está dentro de una página interactiva (por ejemplo, Reservas), puede seguir usándola hasta que navegue, recargue o descargue un fichero; en ese momento se le expulsa.
 - La revalidación hace una consulta a MySQL por petición. Para el volumen de la práctica es despreciable; con mucho tráfico convendría cachear el estado unos minutos.
 - El usuario de MySQL `airtortilla_app` tiene permiso `DELETE` sobre todas las tablas, incluida `Auditoria`: desde la aplicación no se puede borrar, pero sí con acceso directo a la BD.
-- `ReservasDTO` está duplicado entre el proyecto de consola y el web.
 - No hay recuperación ni cambio de contraseña por parte del usuario.
-- No se ha implementado el despliegue con contenedores (Docker).
+- El archivo `.env` con contraseñas de demostración está en el repositorio para facilitar la evaluación. En un entorno real no se subiría y cada instalación tendría sus propias contraseñas.
 
 ### Posibles mejoras
 
 - Revalidar también las páginas interactivas sin esperar a una petición HTTP (`RevalidatingServerAuthenticationStateProvider`).
 - Dar a `airtortilla_app` solo `SELECT` e `INSERT` sobre `Auditoria`.
 - Usar CsvHelper para admitir campos entre comillas e importar por lotes.
-- Mover `ReservasDTO` a una biblioteca de clases compartida.
 - Cambio de contraseña y bloqueo temporal tras varios intentos fallidos.
 - Paginación en la auditoría y en las reservas.
 - Pruebas unitarias (validación del CSV, DAO, exportadores).
-- Contenedores Docker para la aplicación y MySQL (`docker compose`).
+- Publicar la imagen de la aplicación en un registro (Docker Hub o GitHub Container Registry) para no tener que compilarla en cada equipo.
