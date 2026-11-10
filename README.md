@@ -53,7 +53,7 @@ docker compose ps
 
 Abre **<http://localhost:8080>** con el usuario **`admin`** y la contraseña **`AdminDemo2026`**.
 
-Para probar, importa el [CSV de prueba], consulta y exporta las reservas, da de alta un usuario *Empleado* y revisa la *Auditoría*.
+Para probar, importa el [CSV de prueba](#csv-de-prueba), consulta y exporta las reservas, da de alta un usuario *Empleado* y revisa la *Auditoría*.
 
 ---
 
@@ -124,7 +124,7 @@ Cada grupo de destino y fecha se exporta como `AirTortilla_XX_YYYY_MM_DD` en CSV
 
 ---
 
-## Objetivos de la entrega 2
+## Objetivos de la entrega 
 
 | ID | User Story |
 |---|---|
