@@ -73,7 +73,7 @@ Las filas incorrectas se omiten con un aviso que indica la línea y el motivo. L
 
 ### CSV de prueba
 
-Los CSV no se incluyen en el repositorio. Copia esto en el Bloc de notas y guárdalo como `reservas.csv` (tipo *Todos los archivos*, codificación *UTF-8*):
+Los CSV no se incluyen en el repositorio. Copia esto en el Bloc de notas y guárdalo como `reservas.csv`:
 
 ```csv
 Localizador,Destino,Origen,NombrePasajero,PrimerApellido,SegundoApellido,DocumentoIdentidad,FechaReserva
