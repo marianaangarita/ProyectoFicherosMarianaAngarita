@@ -1,6 +1,5 @@
 # AirTortilla · Gestión de reservas
-
-Práctica de **Acceso a Datos**. Sistema de gestión de reservas de la aerolínea AirTortilla.
+---
 
 ## Índice
 
@@ -11,7 +10,7 @@ Práctica de **Acceso a Datos**. Sistema de gestión de reservas de la aerolíne
 5. [User Stories y tareas medibles](#user-stories-y-tareas-medibles)
 6. [Seguridad](#seguridad)
 7. [Patrones de diseño aplicados](#patrones-de-diseño-aplicados)
-8. [Requisitos y ejecución](#requisitos-y-ejecución)
+8. [Instalación y ejecución (Docker)](#instalación-y-ejecución-docker)
 9. [Formato del CSV de entrada](#formato-del-csv-de-entrada)
 10. [Ficheros exportados](#ficheros-exportados)
 11. [Rendimiento y complejidad](#rendimiento-y-complejidad)
@@ -48,7 +47,6 @@ Además, por requisito legal, toda la infraestructura de datos se migra a una **
 | Seguridad | — | Cookie de autenticación, roles, **BCrypt** | Nuevas User Stories US1 y US2. |
 | Despliegue | `dotnet run` | **Docker** + `docker compose` (MySQL 8.4 + aplicación) | Que cualquiera pueda ejecutar el proyecto sin instalar .NET ni MySQL. |
 
-> **Nota técnica:** no se usa el proveedor Pomelo (el más habitual en tutoriales) porque, a fecha de esta entrega, no tiene versión compatible con EF Core 10.
 
 ### Equivalencia de funciones: consola → web
 
@@ -133,55 +131,23 @@ El script completo está en [`database/airtortilla_schema.sql`](database/airtort
 
 ## User Stories y tareas medibles
 
-Cada User Story se descompone en tareas con un **criterio de aceptación verificable** (se comprueba con una acción concreta y un resultado observable).
+Cada User Story se divide en tareas con un criterio que se puede comprobar en la aplicación.
 
-### US1 · Inicio de sesión
-
-| # | Tarea | Criterio de aceptación | Estado |
-|---|---|---|---|
-| 1.1 | Crear tablas `Usuario` y `Rol` | Existen en MySQL con `NombreUsuario` único y FK a `Rol` | ✅ |
-| 1.2 | Guardar contraseñas con hash BCrypt | En `Usuario.PasswordHash` el valor empieza por `$2a$11$`; la contraseña no aparece en la BD | ✅ |
-| 1.3 | Crear un administrador inicial al arrancar si no hay usuarios | Con la tabla vacía, al arrancar existe `admin` con rol Administrador; su contraseña se lee de *user-secrets*, no del código | ✅ |
-| 1.4 | Página de login | Credenciales correctas → página de inicio con "Hola, *usuario*"; incorrectas → "Usuario o contraseña incorrectos" | ✅ |
-| 1.5 | Mismo mensaje para cualquier fallo | Usuario inexistente, desactivado o contraseña errónea muestran **el mismo** mensaje | ✅ |
-| 1.6 | Proteger todas las páginas por defecto | Sin sesión, `/reservas` redirige a `/login?ReturnUrl=%2Freservas`; tras iniciar sesión se vuelve a `/reservas` | ✅ |
-| 1.7 | Cerrar sesión | El botón "Cerrar sesión" lleva al login y las páginas protegidas vuelven a redirigir | ✅ |
-| 1.8 | Registrar accesos | Cada login correcto genera una fila `LOGIN` y cada fallo una fila `LOGIN_FALLIDO` (sin guardar la contraseña escrita) | ✅ |
-
-### US2 · Alta de usuarios por el administrador
-
-| # | Tarea | Criterio de aceptación | Estado |
-|---|---|---|---|
-| 2.1 | Página de gestión de usuarios | Un Administrador ve `/usuarios` con formulario de alta y lista de usuarios | ✅ |
-| 2.2 | Restringir al rol Administrador | Un Empleado no ve el enlace en el menú y al escribir `/usuarios` va a "Acceso denegado" | ✅ |
-| 2.3 | Validar el alta | Nombre de 3–50 caracteres, contraseña de mínimo 8, rol obligatorio; nombre duplicado → "Ya existe un usuario llamado…" | ✅ |
-| 2.4 | Registrar quién da de alta | La columna "Creado por" muestra el administrador; en BD se guarda `CreadoPorId` | ✅ |
-| 2.5 | Alta y auditoría atómicas | Usuario y registro de auditoría se guardan en una única transacción | ✅ |
-| 2.6 | Activar / desactivar usuarios | Un usuario desactivado no puede iniciar sesión; un administrador no puede desactivarse a sí mismo | ✅ |
-| 2.7 | Expulsar sesiones abiertas al desactivar | Con `empleado1` dentro en otro navegador, al desactivarlo y navegar o recargar, se le redirige al login | ✅ |
-
-### US3 · Trazabilidad de modificaciones
-
-| # | Tarea | Criterio de aceptación | Estado |
-|---|---|---|---|
-| 3.1 | Tabla `Auditoria` | Guarda usuario, fecha, acción, tabla, id del registro y valores antes/después en JSON | ✅ |
-| 3.2 | Componente reutilizable `Auditor` | Toda operación que modifica datos llama a `Auditor.Registrar` dentro del mismo `SaveChanges` | ✅ |
-| 3.3 | Auditar altas | Alta de usuario y cada reserva importada generan una fila `INSERT` | ✅ |
-| 3.4 | Auditar modificaciones con antes/después | Desactivar un usuario genera `UPDATE` con `{"Activo": true}` → `{"Activo": false}` | ✅ |
-| 3.5 | Auditar importaciones y exportaciones | Cada importación genera `IMPORTAR` con el resumen (reservas, pasajeros nuevos, avisos de formato, avisos de datos y total); cada descarga genera `EXPORTAR` con el nombre del fichero | ✅ |
-| 3.6 | Página de auditoría (solo Administrador) | `/auditoria` muestra los 200 registros más recientes, filtrables por acción, con etiquetas legibles ("Modificación de usuario") | ✅ |
-| 3.7 | Auditoría de solo lectura en la aplicación | No existe ninguna opción para editar o borrar registros de auditoría | ✅ |
-
-### Migración a base de datos relacional
-
-| # | Tarea | Criterio de aceptación | Estado |
-|---|---|---|---|
-| M.1 | Esquema y diagrama ER | `database/airtortilla_schema.sql` crea las 7 tablas; diagrama en `assets/` | ✅ |
-| M.2 | Importar CSV a MySQL | El CSV de ejemplo importa las reservas válidas y muestra un aviso por cada fila rechazada | ✅ |
-| M.3 | Importación idempotente | Importar dos veces el mismo CSV no duplica reservas ni pasajeros | ✅ |
-| M.4 | Consulta TOTAL y LÍNEA A LÍNEA | Mismo comportamiento que las opciones 2 y 3 de la consola, incluidos "Fin del fichero" y "Lectura interrumpida por el usuario" | ✅ |
-| M.5 | Exportar en 4 formatos | Se descarga `AirTortilla_XX_YYYY_MM_DD.<ext>` con el mismo contenido que generaba la entrega 1 | ✅ |
-| M.6 | Contenedores (Docker) | En un equipo con solo Docker Desktop, `docker compose up -d --build` deja la aplicación funcionando en `http://localhost:8080` con la base de datos creada | ✅ |
+| US | Tarea | Cómo se comprueba |
+|---|---|---|
+| US1 | Contraseñas con hash BCrypt | En la tabla `usuario`, `PasswordHash` empieza por `$2a$11$`; la contraseña no aparece en la BD |
+| US1 | Administrador inicial | Con la BD vacía, al arrancar existe `admin` con rol Administrador |
+| US1 | Login y cierre de sesión | Credenciales correctas → "Hola, *usuario*"; incorrectas → "Usuario o contraseña incorrectos" (mismo mensaje para cualquier fallo) |
+| US1 | Páginas protegidas por defecto | Sin sesión, `/reservas` redirige a `/login` y, tras entrar, vuelve a `/reservas` |
+| US2 | Alta de usuarios solo para Administrador | Un Empleado no ve *Usuarios* en el menú y al escribir `/usuarios` va a "Acceso denegado" |
+| US2 | Validación del alta | Nombre de 3–50 caracteres, contraseña de 8 o más, rol obligatorio; nombre repetido → aviso |
+| US2 | Activar / desactivar | Un usuario desactivado no puede entrar, y si tenía la sesión abierta se le expulsa al navegar |
+| US3 | Registro de auditoría | Cada login (correcto o fallido), alta, modificación, importación y exportación genera una fila con usuario, fecha y valores antes/después |
+| US3 | Consulta de la auditoría | `/auditoria` (solo Administrador) muestra los registros filtrables por acción, sin opción de editar ni borrar |
+| BD | Esquema relacional | `database/airtortilla_schema.sql` crea las 7 tablas; diagrama ER en `assets/` |
+| BD | Importar CSV | El CSV de prueba importa 5 reservas con 4 avisos; importarlo otra vez no duplica nada |
+| BD | Consultar y exportar | *Total* y *Línea a línea* como en la entrega 1; exportación a CSV, JSON, XML y TXT |
+| BD | Docker | Con solo Docker Desktop, `docker compose up -d --build` deja la aplicación en `http://localhost:8080` |
 
 ---
 
@@ -198,7 +164,7 @@ Cada User Story se descompone en tareas con un **criterio de aceptación verific
 | **`/exportar` con `.RequireAuthorization()`** | La descarga de datos personales exige sesión iniciada. |
 | **Antiforgery token** en formularios y logout por `POST` | Protección frente a CSRF (otra web no puede cerrar la sesión ni enviar formularios en tu nombre). |
 | **Validación de `ReturnUrl`** | Solo se redirige a rutas internas (evita redirecciones a webs externas tras el login). |
-| **User-secrets** | La cadena de conexión y la contraseña del admin inicial no están en el repositorio. |
+| **Secretos fuera del código** (*user-secrets* en desarrollo, `.env` en Docker) | Ninguna contraseña está escrita en el código C#. |
 | **Puerto de MySQL en Docker solo local** (`127.0.0.1:3307`) | Nadie de la misma red puede conectarse a la base de datos del contenedor. |
 | **Usuario de MySQL propio** (`airtortilla_app`) | La aplicación no usa `root`; solo tiene `SELECT, INSERT, UPDATE, DELETE` sobre `airtortilla`. |
 | **Nunca se audita la contraseña escrita** en un login fallido | Un error tipográfico de la contraseña real no queda registrado. |
@@ -224,13 +190,11 @@ En la entrega 1, `GenerarFicheros` tenía un `switch` que decidía el formato **
 
 ---
 
-## Requisitos y ejecución
+## Instalación y ejecución (Docker)
 
-> **Para evaluar la práctica, usa la opción A (Docker).** No hace falta instalar .NET, MySQL ni Visual Studio: Docker crea la base de datos y arranca la aplicación con un solo comando.
+La aplicación se ejecuta con **Docker**: no hace falta instalar .NET, MySQL ni Visual Studio. Docker crea la base de datos y arranca la aplicación con un solo comando.
 
-### Opción A · Con Docker (recomendada)
-
-#### Qué necesitas
+### Qué necesitas
 
 | Programa | Para qué | ¿Hay que instalarlo? |
 |---|---|---|
@@ -240,24 +204,24 @@ En la entrega 1, `GenerarFicheros` tenía un `switch` que decidía el formato **
 
 No necesitas Git, .NET, MySQL ni Visual Studio.
 
-#### Paso 1 · Descargar el proyecto
+### Paso 1 · Descargar el proyecto
 
 **Con GitHub Desktop:**
-1. **File → Clone repository...** → pestaña **URL**.
-2. Pega: `https://github.com/marianaangarita/ProyectoFicherosMarianaAngarita`
+1. Abre <https://github.com/marianaangarita/ProyectoFicherosMarianaAngarita>.
+2. Pulsa el botón verde **Code → Open with GitHub Desktop**. Se abrirá GitHub Desktop con la ventana de clonar ya rellenada.
 3. En **Local path** elige una carpeta **fuera de OneDrive** (por ejemplo `C:\Repos`). OneDrive puede bloquear archivos y provocar errores raros.
-4. Pulsa **Clone**. Se descarga la rama principal (`master`), que contiene la entrega 2.
+4. Pulsa **Clone**.
 
 **Sin GitHub Desktop (ZIP):**
 1. Abre <https://github.com/marianaangarita/ProyectoFicherosMarianaAngarita>.
 2. Botón verde **Code → Download ZIP**.
 3. Descomprime el ZIP en una carpeta fuera de OneDrive.
 
-#### Paso 2 · Abrir Docker Desktop
+### Paso 2 · Abrir Docker Desktop
 
 Ábrelo desde el menú Inicio y espera a que abajo a la izquierda ponga **"Engine running"** (indicador verde).
 
-#### Paso 3 · Abrir una terminal en la carpeta del proyecto
+### Paso 3 · Abrir una terminal en la carpeta del proyecto
 
 La carpeta correcta es la que contiene el archivo **`docker-compose.yml`**. Cualquiera de estas formas vale:
 
@@ -267,7 +231,7 @@ La carpeta correcta es la que contiene el archivo **`docker-compose.yml`**. Cual
 
 Comprueba que estás en el sitio correcto escribiendo `dir`: debe aparecer `docker-compose.yml`.
 
-#### Paso 4 · Arrancar la aplicación
+### Paso 4 · Arrancar la aplicación
 
 ```
 docker compose up -d --build
@@ -284,7 +248,7 @@ docker compose ps
 
 Debe salir `airtortilla-db` como **Up (healthy)** y `airtortilla-web` como **Up**.
 
-#### Paso 5 · Entrar en la aplicación
+### Paso 5 · Entrar en la aplicación
 
 Abre **<http://localhost:8080>** e inicia sesión con el administrador de demostración:
 
@@ -292,14 +256,14 @@ Abre **<http://localhost:8080>** e inicia sesión con el administrador de demost
 |---|---|
 | `admin` | `AdminDemo2026` |
 
-#### Paso 6 · Probar
+### Paso 6 · Probar
 
 1. **Importar CSV:** crea un archivo `reservas.csv` con el [ejemplo de prueba](#csv-de-prueba-para-copiar-y-pegar) y súbelo.
 2. **Reservas:** consulta un grupo en modalidad *Total* y *Línea a línea*, y expórtalo en los cuatro formatos.
 3. **Usuarios:** da de alta un usuario con rol *Empleado*, cierra sesión y entra con él: no verá *Usuarios* ni *Auditoría*.
 4. **Auditoría** (como `admin`): verás registrados todos los pasos anteriores.
 
-#### Apagar y volver a empezar
+### Apagar y volver a empezar
 
 | Quiero... | Comando | ¿Se borran los datos? |
 |---|---|---|
@@ -308,7 +272,7 @@ Abre **<http://localhost:8080>** e inicia sesión con el administrador de demost
 | Apagar y quitar los contenedores | `docker compose down` | No (quedan en el volumen) |
 | **Empezar de cero** (base de datos vacía) | `docker compose down -v` y después `docker compose up -d --build` | **Sí** |
 
-#### Si algo falla
+### Si algo falla
 
 | Síntoma | Solución |
 |---|---|
@@ -319,11 +283,11 @@ Abre **<http://localhost:8080>** e inicia sesión con el administrador de demost
 | `port is already allocated` (puerto 8080 ocupado) | Otro programa usa el puerto 8080. En `docker-compose.yml`, cambia `"8080:8080"` por `"8081:8080"` y entra en `http://localhost:8081`. |
 | Los botones no responden (por ejemplo, *Importar* no se activa) | Recarga la página con `F5`. Si se reiniciaron los contenedores con la página abierta, se pierde la conexión. |
 
-#### Sobre las contraseñas del archivo `.env`
+### Sobre las contraseñas del archivo `.env`
 
 El archivo `.env` contiene contraseñas **de demostración** (`RootDemo2026`, `AppDemo2026`, `AdminDemo2026`). Están en el repositorio a propósito, para que el proyecto funcione sin configurar nada. Solo sirven para la base de datos que Docker crea **en tu propio ordenador**, que además solo es accesible desde ese ordenador (`127.0.0.1`). No se usan en ningún otro sitio.
 
-#### Qué hace Docker exactamente
+### Qué hace Docker exactamente
 
 `docker-compose.yml` define dos contenedores:
 
@@ -336,36 +300,6 @@ Ajustes necesarios para que funcione igual que en Windows:
 - `--lower-case-table-names=1`: MySQL en Linux distingue mayúsculas en los nombres de tabla y en Windows no. Sin esta opción, la aplicación busca `usuario` y la tabla se llama `Usuario`.
 - `TZ: Europe/Madrid`: sin ella, los contenedores usan la hora UTC y la auditoría registraría una hora menos.
 - El `Dockerfile` restaura y publica en un solo paso: si se separan, .NET 10 no incluye `blazor.web.js` y las páginas dejan de ser interactivas.
-
-#### 2. Crear el usuario de la aplicación
-
-```sql
-CREATE USER 'airtortilla_app'@'localhost' IDENTIFIED BY '<contraseña>';
-GRANT SELECT, INSERT, UPDATE, DELETE ON airtortilla.* TO 'airtortilla_app'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-#### 3. Configurar los secretos
-
-Desde la carpeta `AirTortilla.Web/`:
-
-```
-dotnet user-secrets set "ConnectionStrings:AirTortilla" "server=localhost;port=3306;database=airtortilla;user=airtortilla_app;password=<contraseña>"
-dotnet user-secrets set "AdminInicial:Password" "<contraseña del administrador>"
-```
-
-Los *user-secrets* se guardan en el perfil del usuario de Windows, fuera del repositorio.
-
-#### 4. Ejecutar
-
-```
-cd AirTortilla.Web
-dotnet run
-```
-
-Abrir la dirección que muestra la terminal (`http://localhost:5223`). En el primer arranque se crea el usuario `admin` con la contraseña del paso 3. Si falta algún secreto, la aplicación se detiene con un mensaje que indica cuál.
-
----
 
 ## Formato del CSV de entrada
 
