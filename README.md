@@ -17,7 +17,7 @@
 
 ## Instalación y ejecución
 
-Solo necesitas **Docker Desktop** y **GitHub Desktop** (o descargar el ZIP). No hace falta instalar .NET, MySQL ni Visual Studio.
+Solo necesitas **Docker Desktop** y **GitHub Desktop** (o descargar el ZIP).
 
 ### 1. Descargar el proyecto
 
