@@ -1,13 +1,6 @@
 # AirTortilla · Gestión de reservas
 
-Práctica de **Acceso a Datos (DAM)**. Sistema de gestión de reservas de la aerolínea AirTortilla.
-
-- **Entrega 1:** aplicación de consola en C# que leía un CSV de reservas y lo dividía en ficheros por país de destino y fecha.
-- **Entrega 2 (actual):** migración a **aplicación web (Blazor)** con **base de datos relacional (MySQL)**, inicio de sesión, gestión de usuarios por rol y trazabilidad de las modificaciones.
-
-> El proyecto de consola de la entrega 1 se ha retirado del repositorio al completarse la migración. Su código sigue disponible en el historial de Git (Pull Request #1). El proyecto activo es `AirTortilla.Web/`.
-
----
+Práctica de **Acceso a Datos**. Sistema de gestión de reservas de la aerolínea AirTortilla.
 
 ## Índice
 
@@ -343,21 +336,6 @@ Ajustes necesarios para que funcione igual que en Windows:
 - `--lower-case-table-names=1`: MySQL en Linux distingue mayúsculas en los nombres de tabla y en Windows no. Sin esta opción, la aplicación busca `usuario` y la tabla se llama `Usuario`.
 - `TZ: Europe/Madrid`: sin ella, los contenedores usan la hora UTC y la auditoría registraría una hora menos.
 - El `Dockerfile` restaura y publica en un solo paso: si se separan, .NET 10 no incluye `blazor.web.js` y las páginas dejan de ser interactivas.
-
-### Opción B · Sin Docker (para desarrollar)
-
-Para modificar el código con Visual Studio o VS Code.
-
-#### Requisitos
-
-- .NET 10 SDK (`dotnet --version`)
-- MySQL Server 8 y MySQL Workbench
-
-#### 1. Crear la base de datos
-
-En MySQL Workbench, abrir y ejecutar `database/airtortilla_schema.sql` (botón ⚡). Crea la base de datos `airtortilla`, las tablas, los roles y los 249 países.
-
-> ⚠️ El script empieza con `DROP DATABASE IF EXISTS airtortilla`: si se vuelve a ejecutar, **borra todos los datos**.
 
 #### 2. Crear el usuario de la aplicación
 
