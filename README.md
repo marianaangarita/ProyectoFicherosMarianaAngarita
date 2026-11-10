@@ -53,7 +53,54 @@ docker compose ps
 
 Abre **<http://localhost:8080>** con el usuario **`admin`** y la contraseña **`AdminDemo2026`**.
 
-Para probar, importa el [CSV de prueba](#csv-de-prueba), consulta y exporta las reservas, da de alta un usuario *Empleado* y revisa la *Auditoría*.
+Para probar, importa el [CSV de prueba], consulta y exporta las reservas, da de alta un usuario *Empleado* y revisa la *Auditoría*.
+
+---
+
+## Formato del CSV
+
+Mismo formato que la entrega 1: UTF-8, primera línea de cabecera, separado por comas y sin comas dentro de los campos.
+
+| Columna | Restricción | Ejemplo |
+|---|---|---|
+| Localizador | Obligatorio, máx. 20 | LOC001 |
+| Destino / Origen | Código ISO de 2 letras (Reino Unido es `GB`, no `UK`) | FR / ES |
+| NombrePasajero, PrimerApellido, SegundoApellido | Máx. 60 (el segundo apellido es opcional) | Juan, Perez, Gomez |
+| DocumentoIdentidad | Obligatorio, máx. 20 | 11111111A |
+| FechaReserva | `yyyy-MM-dd` | 2026-05-14 |
+
+Las filas incorrectas se omiten con un aviso que indica la línea y el motivo. Los localizadores que ya existen no se vuelven a importar.
+
+### CSV de prueba
+
+Los CSV no se incluyen en el repositorio. Copia esto en el Bloc de notas y guárdalo como `reservas.csv` (tipo *Todos los archivos*, codificación *UTF-8*):
+
+```csv
+Localizador,Destino,Origen,NombrePasajero,PrimerApellido,SegundoApellido,DocumentoIdentidad,FechaReserva
+LOC001,FR,ES,Juan,Perez,Gomez,11111111A,2026-05-14
+LOC001,FR,ES,Juan,Perez,Gomez,22222222B,2026-05-14
+LOC001,FR,ES,Juan,Perez,Gomez,33333333C,2026-05-14
+LOC001,FR,ES,Juan,Perez,Gomez,44444444D,2026-05-14
+LOC001,FR,ES,Juan,Perez,Gomez,55555555E,2026-05-14
+LOC002,IT,ES,Maria,Garcia,Lopez,66666666F,2026-05-14
+LOC002,IT,ES,Maria,Garcia,Lopez,77777777G,2026-05-14
+LOC003,FR,ES,Ana,Martin,Ruiz,88888888H,2026-05-15
+LOC003,FR,ES,Ana,Martin,Ruiz,99999999J,2026-05-15
+LOC004,FR,ES,Juan,Perez,Gomez,11111111A,2026-05-15
+LOC005,DE,PT,Lucas,Silva,,12345678K,2026-05-16
+LOC006,UK,ES,Peter,Smith,,23456789L,2026-05-16
+LOC007,FR,ES,Laura,Sanz,Gil,34567890M,2026-13-45
+LOC008,FR,ES,Carlos,Ruiz
+LOC009,FR,ES,Elena,Diaz,Mora,45678901N,2026-05-17
+LOC009,IT,ES,Pablo,Diaz,Mora,56789012P,2026-05-17
+```
+
+**Resultado esperado:** 5 reservas importadas, 10 pasajeros nuevos y 4 avisos (LOC006 con un código ISO incorrecto, LOC007 con una fecha imposible, LOC008 con columnas que faltan y LOC009 con dos destinos distintos). El pasajero `11111111A` aparece en LOC001 y LOC004, pero se guarda una sola vez.
+
+Cada grupo de destino y fecha se exporta como `AirTortilla_XX_YYYY_MM_DD` en CSV, JSON, XML o TXT.
+
+---
+
 
 ### Comandos útiles
 
@@ -184,52 +231,6 @@ Decisiones principales:
 - **DTO:** `ReservasDTO` transporta los datos entre el CSV, la base de datos y los ficheros exportados.
 - **DAO:** las páginas usan la interfaz `IReservaDao`; la implementación (`ReservaDaoMySql`) se elige en una línea de `Program.cs`. Volver a ficheros solo requeriría otra implementación.
 - **Factory:** `ExportadorFactory.Crear("json")` devuelve el exportador adecuado. Añadir un formato es una clase nueva más una línea en la fábrica.
-
----
-
-## Formato del CSV
-
-Mismo formato que la entrega 1: UTF-8, primera línea de cabecera, separado por comas y sin comas dentro de los campos.
-
-| Columna | Restricción | Ejemplo |
-|---|---|---|
-| Localizador | Obligatorio, máx. 20 | LOC001 |
-| Destino / Origen | Código ISO de 2 letras (Reino Unido es `GB`, no `UK`) | FR / ES |
-| NombrePasajero, PrimerApellido, SegundoApellido | Máx. 60 (el segundo apellido es opcional) | Juan, Perez, Gomez |
-| DocumentoIdentidad | Obligatorio, máx. 20 | 11111111A |
-| FechaReserva | `yyyy-MM-dd` | 2026-05-14 |
-
-Las filas incorrectas se omiten con un aviso que indica la línea y el motivo. Los localizadores que ya existen no se vuelven a importar.
-
-### CSV de prueba
-
-Los CSV no se incluyen en el repositorio. Copia esto en el Bloc de notas y guárdalo como `reservas.csv` (tipo *Todos los archivos*, codificación *UTF-8*):
-
-```csv
-Localizador,Destino,Origen,NombrePasajero,PrimerApellido,SegundoApellido,DocumentoIdentidad,FechaReserva
-LOC001,FR,ES,Juan,Perez,Gomez,11111111A,2026-05-14
-LOC001,FR,ES,Juan,Perez,Gomez,22222222B,2026-05-14
-LOC001,FR,ES,Juan,Perez,Gomez,33333333C,2026-05-14
-LOC001,FR,ES,Juan,Perez,Gomez,44444444D,2026-05-14
-LOC001,FR,ES,Juan,Perez,Gomez,55555555E,2026-05-14
-LOC002,IT,ES,Maria,Garcia,Lopez,66666666F,2026-05-14
-LOC002,IT,ES,Maria,Garcia,Lopez,77777777G,2026-05-14
-LOC003,FR,ES,Ana,Martin,Ruiz,88888888H,2026-05-15
-LOC003,FR,ES,Ana,Martin,Ruiz,99999999J,2026-05-15
-LOC004,FR,ES,Juan,Perez,Gomez,11111111A,2026-05-15
-LOC005,DE,PT,Lucas,Silva,,12345678K,2026-05-16
-LOC006,UK,ES,Peter,Smith,,23456789L,2026-05-16
-LOC007,FR,ES,Laura,Sanz,Gil,34567890M,2026-13-45
-LOC008,FR,ES,Carlos,Ruiz
-LOC009,FR,ES,Elena,Diaz,Mora,45678901N,2026-05-17
-LOC009,IT,ES,Pablo,Diaz,Mora,56789012P,2026-05-17
-```
-
-**Resultado esperado:** 5 reservas importadas, 10 pasajeros nuevos y 4 avisos (LOC006 con un código ISO incorrecto, LOC007 con una fecha imposible, LOC008 con columnas que faltan y LOC009 con dos destinos distintos). El pasajero `11111111A` aparece en LOC001 y LOC004, pero se guarda una sola vez.
-
-Cada grupo de destino y fecha se exporta como `AirTortilla_XX_YYYY_MM_DD` en CSV, JSON, XML o TXT.
-
----
 
 ## Conclusión
 
