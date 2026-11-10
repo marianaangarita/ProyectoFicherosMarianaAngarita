@@ -138,7 +138,7 @@ Además, se migra toda la persistencia a una **base de datos relacional** y se a
 
 ## Migración de tecnología
 
-Esta es la última entrega que permite cambiar el stack sin coste, así que se documentan los cambios:
+En esta entrega se ha cambiado el stack tecnológico. Estos son los cambios respecto a la entrega 1:
 
 | Capa | Entrega 1 | Entrega 2 |
 |---|---|---|
