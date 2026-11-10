@@ -1,99 +1,136 @@
 # AirTortilla · Gestión de reservas
+
 ## Índice
 
-1. [Objetivos de la entrega 2](#objetivos-de-la-entrega-2)
-2. [Migración de tecnología](#migración-de-tecnología)
-3. [Arquitectura del sistema](#arquitectura-del-sistema)
-4. [Modelo de datos](#modelo-de-datos)
-5. [User Stories y tareas medibles](#user-stories-y-tareas-medibles)
-6. [Seguridad](#seguridad)
-7. [Patrones de diseño aplicados](#patrones-de-diseño-aplicados)
-8. [Instalación y ejecución (Docker)](#instalación-y-ejecución-docker)
-9. [Formato del CSV de entrada](#formato-del-csv-de-entrada)
-10. [Ficheros exportados](#ficheros-exportados)
-11. [Rendimiento y complejidad](#rendimiento-y-complejidad)
-12. [Conclusión, limitaciones y mejoras](#conclusión)
+1. [Instalación y ejecución](#instalación-y-ejecución)
+2. [Objetivos de la entrega 2](#objetivos-de-la-entrega-2)
+3. [Migración de tecnología](#migración-de-tecnología)
+4. [Arquitectura](#arquitectura)
+5. [Modelo de datos](#modelo-de-datos)
+6. [User Stories y tareas medibles](#user-stories-y-tareas-medibles)
+7. [Seguridad](#seguridad)
+8. [Patrones de diseño](#patrones-de-diseño)
+9. [Formato del CSV](#formato-del-csv)
+10. [Conclusión](#conclusión)
+
+---
+
+## Instalación y ejecución
+
+Solo necesitas **Docker Desktop** y **GitHub Desktop** (o descargar el ZIP). No hace falta instalar .NET, MySQL ni Visual Studio.
+
+### 1. Descargar el proyecto
+
+- **Con GitHub Desktop:** en <https://github.com/marianaangarita/ProyectoFicherosMarianaAngarita>, pulsa **Code → Open with GitHub Desktop** y después **Clone**. Puedes dejar la carpeta que propone, salvo que esté dentro de OneDrive (en ese caso elige otra, por ejemplo `C:\Repos`).
+- **Sin GitHub Desktop:** **Code → Download ZIP** y descomprímelo fuera de OneDrive.
+
+### 2. Abrir Docker Desktop
+
+Espera a que ponga **"Engine running"**.
+
+### 3. Abrir el proyecto en Visual Studio Code
+
+1. En GitHub Desktop, pulsa **Open in Visual Studio Code** (o en VS Code: **File → Open Folder...** y elige la carpeta del proyecto).
+2. Abre una terminal: menú **Terminal → New Terminal**.
+
+La terminal se abre directamente en la carpeta del proyecto, la que contiene `docker-compose.yml`.
+
+### 4. Arrancar
+
+```
+docker compose up -d --build
+```
+
+La primera vez tarda unos minutos (descarga MySQL y .NET). Después comprueba que los dos contenedores están en marcha:
+
+```
+docker compose ps
+```
+
+`airtortilla-db` debe aparecer como **Up (healthy)** y `airtortilla-web` como **Up**.
+
+### 5. Entrar
+
+Abre **<http://localhost:8080>** con el usuario **`admin`** y la contraseña **`AdminDemo2026`**.
+
+Para probar, importa el [CSV de prueba](#csv-de-prueba), consulta y exporta las reservas, da de alta un usuario *Empleado* y revisa la *Auditoría*.
+
+### Comandos útiles
+
+| Quiero... | Comando |
+|---|---|
+| Apagar | `docker compose stop` |
+| Volver a encender | `docker compose start` |
+| Empezar de cero (borra los datos) | `docker compose down -v` y después `docker compose up -d --build` |
+
+### Si algo falla
+
+| Problema | Solución |
+|---|---|
+| Error de conexión con Docker | Docker Desktop no está abierto o aún no pone "Engine running". |
+| `no configuration file provided` | La terminal no está en la carpeta del proyecto. |
+| Se cortó el primer arranque o `airtortilla-web` sale como *Restarting* | `docker compose down -v` y vuelve a arrancar. |
+| Puerto 8080 ocupado | En `docker-compose.yml` cambia `"8080:8080"` por `"8081:8080"` y entra en `localhost:8081`. |
+| Los botones no responden | Recarga la página con `F5`. |
+
+> Las contraseñas del archivo `.env` son **de demostración**: solo sirven para la base de datos que Docker crea en tu propio ordenador, accesible únicamente desde él.
 
 ---
 
 ## Objetivos de la entrega 2
 
-User Stories de la iteración:
-
 | ID | User Story |
 |---|---|
 | **US1** | Como **Empleado** quiero poder hacer *log in* para acceder a los recursos de la compañía. |
-| **US2** | Como **Administrador de Sistemas** quiero poder dar de alta usuarios para garantizar la seguridad interna de la aplicación. |
-| **US3** | Como **Administrador de Sistemas** quiero mantener la trazabilidad de las modificaciones para mantener las buenas prácticas de seguridad en la aplicación. |
+| **US2** | Como **Administrador** quiero poder dar de alta usuarios para garantizar la seguridad interna de la aplicación. |
+| **US3** | Como **Administrador** quiero mantener la trazabilidad de las modificaciones. |
 
-Además, por requisito legal, toda la infraestructura de datos se migra a una **base de datos relacional**. Los contenedores (Docker) se consideran no críticos para esta entrega.
+Además, se migra toda la persistencia a una **base de datos relacional** y se añaden contenedores (Docker).
 
 ---
 
 ## Migración de tecnología
 
-> El enunciado indica que esta es la última versión que permite migrar el stack principal sin coste. Se documenta aquí el momento y los cambios.
+Esta es la última entrega que permite cambiar el stack sin coste, así que se documentan los cambios:
 
-### Stack: antes y después
+| Capa | Entrega 1 | Entrega 2 |
+|---|---|---|
+| Interfaz | Consola | **Blazor Server** (web) |
+| Persistencia | Ficheros CSV/JSON/XML/TXT | **MySQL 8** |
+| Acceso a datos | `StreamReader` / `File` | **Entity Framework Core 10** |
+| Seguridad | — | Login con cookie, roles y **BCrypt** |
+| Ejecución | `dotnet run` | **Docker Compose** |
 
-| Capa | Entrega 1 | Entrega 2 | Motivo del cambio |
-|---|---|---|---|
-| Lenguaje / backend | C# (.NET 10) | C# (.NET 10) | Se mantiene. |
-| Interfaz | Terminal (menú de consola) | **Web: Blazor Server** (ASP.NET Core) | Login y gestión de usuarios requieren una interfaz multiusuario. Blazor permite seguir en C# sin JavaScript. |
-| Persistencia | Ficheros (CSV/JSON/XML/TXT) | **MySQL 8** | Requisito legal de base de datos relacional. |
-| Acceso a datos | `StreamReader` / `File.*` | **Entity Framework Core 10** + `MySql.EntityFrameworkCore` (proveedor oficial de Oracle) | ORM: consultas en C# traducidas a SQL, menos código repetitivo. |
-| Seguridad | — | Cookie de autenticación, roles, **BCrypt** | Nuevas User Stories US1 y US2. |
-| Despliegue | `dotnet run` | **Docker** + `docker compose` (MySQL 8.4 + aplicación) | Que cualquiera pueda ejecutar el proyecto sin instalar .NET ni MySQL. |
+Las funciones de la entrega 1 se mantienen:
 
-
-### Equivalencia de funciones: consola → web
-
-| Entrega 1 (consola) | Entrega 2 (web) |
+| Consola (entrega 1) | Web (entrega 2) |
 |---|---|
-| Opción 1: introducir ruta del CSV | Página **Importar CSV**: se sube el fichero desde el navegador |
-| Opción 1: generar **todos** los ficheros en disco | Los datos se guardan en MySQL; cada fichero se genera **bajo demanda** desde **Reservas → Exportar** y se descarga |
-| Opción 2: consulta TOTAL (`File.ReadAllText`) | Botón **Total**: tabla con todas las filas del grupo |
-| Opción 3: LÍNEA A LÍNEA (`[ENTER]` / `[Q]`) | Botón **Línea a línea**: "Siguiente línea" / "Salir" |
-| Escribir a mano el nombre del fichero | Elegirlo de la lista de grupos destino + fecha |
-| `HashSet` con 249 códigos ISO en el código | Tabla `Pais` en la base de datos con clave foránea |
-| Avisos por consola | Avisos en pantalla con número de línea y motivo |
+| Opción 1: leer CSV y generar ficheros | **Importar CSV** guarda en MySQL; los ficheros se generan al **exportar** |
+| Opción 2: consulta total | Botón **Total** |
+| Opción 3: línea a línea (`ENTER` / `Q`) | Botón **Línea a línea** ("Siguiente" / "Salir") |
+| Códigos ISO en un `HashSet` del código | Tabla `Pais` en la base de datos |
 
-**Idea clave:** en la entrega 1, cada combinación destino + fecha era un **fichero**. En la entrega 2 es una **consulta** a la base de datos (`ObtenerGruposAsync`), y el fichero `AirTortilla_XX_YYYY_MM_DD` solo se genera cuando alguien lo exporta.
-
-### Código reutilizado
-
-- `ReservasDTO` (con `GetCsvHeader`, `ToCsvLine`, `ToTxtLine`) se trasladó al proyecto web sin cambios de lógica para transportar los datos y generar los ficheros exportados.
-- La lógica de lectura y validación del CSV se adapta a `LectorCsvReservas` (lee de un `Stream` subido en lugar de una ruta; avisos en lista en lugar de `Console.WriteLine`).
-- La lógica de los cuatro formatos de `GenerarFicheros` se reparte en cuatro clases exportadoras (patrón Factory).
+El proyecto de consola se ha eliminado del repositorio; su código sigue en el historial de Git (Pull Request #1).
 
 ---
 
-## Arquitectura del sistema
+## Arquitectura
 
-![Diagrama de Arquitectura - Entrega 2](assets/AirTortilla_Arquitectura_E2_V3.drawio.png)
-
-Estructura del proyecto web:
+![Diagrama de Arquitectura](assets/AirTortilla_Arquitectura_E2_V3.drawio.png)
 
 ```
 AirTortilla.Web/
-├── Components/
-│   ├── Layout/            MainLayout, NavMenu (menú según rol)
-│   └── Pages/             Login, Home, Importar, Reservas, Usuarios, Auditoria, AccesoDenegado
+├── Components/Pages/   Login, Inicio, Importar, Reservas, Usuarios, Auditoria
 ├── Data/
-│   ├── AirTortillaContext.cs   Contexto de EF Core
-│   ├── Auditor.cs              Registro de auditoría
-│   ├── Entities/               Entidades (generadas por scaffolding desde MySQL)
-│   ├── DAO/                    IReservaDao + ReservaDaoMySql (patrón DAO)
-│   ├── CSV/                    LectorCsvReservas
-│   └── Exportacion/            IExportador, exportadores y ExportadorFactory
-├── DTO/                   ReservasDTO
-└── Program.cs             Configuración: BD, autenticación, rutas /logout y /exportar
-database/
-├── airtortilla_schema.sql Script de creación de la base de datos
-└── AirTortilla_ER.drawio  Diagrama entidad-relación (editable)
-docker-compose.yml         Contenedores MySQL + aplicación
-.env                       Contraseñas de demostración para Docker
-AirTortilla.Web/Dockerfile Cómo se compila la aplicación dentro de Docker
+│   ├── Entities/       Entidades de EF Core
+│   ├── DAO/            IReservaDao + ReservaDaoMySql
+│   ├── CSV/            LectorCsvReservas
+│   ├── Exportacion/    Exportadores + ExportadorFactory
+│   └── Auditor.cs      Registro de auditoría
+├── DTO/                ReservasDTO
+└── Program.cs          Configuración (BD, login, rutas)
+database/               Script SQL y diagrama ER
+docker-compose.yml      MySQL + aplicación
 ```
 
 ---
@@ -102,240 +139,71 @@ AirTortilla.Web/Dockerfile Cómo se compila la aplicación dentro de Docker
 
 ![Diagrama Entidad-Relación](assets/AirTortilla_ER.drawio.png)
 
-El script completo está en [`database/airtortilla_schema.sql`](database/airtortilla_schema.sql).
+Script: [`database/airtortilla_schema.sql`](database/airtortilla_schema.sql). Siete tablas: `Pais`, `Reserva`, `Pasajero`, `ReservaPasajero`, `Rol`, `Usuario` y `Auditoria`.
 
-### Tablas
-
-| Bloque | Tabla | Contenido |
-|---|---|---|
-| Reservas | `Pais` | Catálogo ISO 3166-1 alfa-2 (249 códigos) |
-| | `Reserva` | Una fila por localizador: origen, destino y fecha |
-| | `Pasajero` | Una fila por documento de identidad |
-| | `ReservaPasajero` | Tabla intermedia de la relación N:M |
-| Seguridad | `Rol` | `Administrador`, `Empleado` |
-| | `Usuario` | Usuario, hash de contraseña, rol, activo, quién lo dio de alta |
-| Trazabilidad | `Auditoria` | Quién, cuándo, qué acción, sobre qué registro, valores antes/después (JSON) |
-
-### Decisiones de diseño
-
-- **Normalización.** La fila plana del CSV se divide en `Reserva`, `Pasajero` y `ReservaPasajero`. Ejemplo: `LOC001` con 5 pasajeros pasa de 5 filas que repiten destino, origen y fecha a **1 reserva + 5 pasajeros + 5 enlaces**.
-- **Relación N:M Reserva–Pasajero.** Una reserva incluye varios pasajeros y un pasajero puede figurar en varias reservas. Como una base de datos relacional no puede representar N:M directamente, se resuelve con `ReservaPasajero` (clave primaria compuesta por las dos claves foráneas). Un pasajero que aparece en dos reservas se guarda **una sola vez**.
-- **Origen, destino y fecha pertenecen a la reserva**, no al pasajero: todos los pasajeros de un localizador viajan juntos. Si en el CSV un mismo localizador tiene destinos o fechas distintos, se rechaza.
-- **`Usuario.Activo`** permite dar de baja sin borrar, para que la auditoría nunca apunte a un usuario inexistente.
-- **`Usuario.CreadoPorId`** (relación de la tabla consigo misma) registra qué administrador dio de alta a cada usuario.
-- **`Auditoria.UsuarioId` admite NULL** únicamente para registrar intentos de acceso con un nombre de usuario que no existe.
+Decisiones principales:
+- **Reserva N:M Pasajero**, resuelta con la tabla intermedia `ReservaPasajero`. Un pasajero que viaja en dos reservas se guarda una sola vez.
+- **Origen, destino y fecha son de la reserva**: todos los pasajeros de un localizador viajan juntos.
+- **Los usuarios se desactivan, no se borran**, para no perder su rastro en la auditoría.
+- **`Usuario.CreadoPorId`** guarda qué administrador dio de alta a cada usuario.
 
 ---
 
 ## User Stories y tareas medibles
 
-Cada User Story se divide en tareas con un criterio que se puede comprobar en la aplicación.
-
 | US | Tarea | Cómo se comprueba |
 |---|---|---|
-| US1 | Contraseñas con hash BCrypt | En la tabla `usuario`, `PasswordHash` empieza por `$2a$11$`; la contraseña no aparece en la BD |
-| US1 | Administrador inicial | Con la BD vacía, al arrancar existe `admin` con rol Administrador |
-| US1 | Login y cierre de sesión | Credenciales correctas → "Hola, *usuario*"; incorrectas → "Usuario o contraseña incorrectos" (mismo mensaje para cualquier fallo) |
-| US1 | Páginas protegidas por defecto | Sin sesión, `/reservas` redirige a `/login` y, tras entrar, vuelve a `/reservas` |
-| US2 | Alta de usuarios solo para Administrador | Un Empleado no ve *Usuarios* en el menú y al escribir `/usuarios` va a "Acceso denegado" |
-| US2 | Validación del alta | Nombre de 3–50 caracteres, contraseña de 8 o más, rol obligatorio; nombre repetido → aviso |
-| US2 | Activar / desactivar | Un usuario desactivado no puede entrar, y si tenía la sesión abierta se le expulsa al navegar |
-| US3 | Registro de auditoría | Cada login (correcto o fallido), alta, modificación, importación y exportación genera una fila con usuario, fecha y valores antes/después |
-| US3 | Consulta de la auditoría | `/auditoria` (solo Administrador) muestra los registros filtrables por acción, sin opción de editar ni borrar |
-| BD | Esquema relacional | `database/airtortilla_schema.sql` crea las 7 tablas; diagrama ER en `assets/` |
-| BD | Importar CSV | El CSV de prueba importa 5 reservas con 4 avisos; importarlo otra vez no duplica nada |
-| BD | Consultar y exportar | *Total* y *Línea a línea* como en la entrega 1; exportación a CSV, JSON, XML y TXT |
-| BD | Docker | Con solo Docker Desktop, `docker compose up -d --build` deja la aplicación en `http://localhost:8080` |
+| US1 | Contraseñas con BCrypt | En la tabla `usuario`, `PasswordHash` empieza por `$2a$11$` |
+| US1 | Login y cierre de sesión | Credenciales correctas → "Hola, *usuario*"; incorrectas → "Usuario o contraseña incorrectos" |
+| US1 | Páginas protegidas | Sin sesión, `/reservas` redirige a `/login` |
+| US2 | Alta solo para Administrador | Un Empleado no ve *Usuarios* y en `/usuarios` recibe "Acceso denegado" |
+| US2 | Validación del alta | Nombre de 3–50 caracteres, contraseña de 8 o más, rol obligatorio, sin repetidos |
+| US2 | Activar / desactivar | Un usuario desactivado no puede entrar y, si estaba dentro, se le expulsa |
+| US3 | Registro de auditoría | Logins, altas, modificaciones, importaciones y exportaciones quedan registrados con usuario, fecha y valores antes/después |
+| US3 | Consulta de auditoría | `/auditoria` (solo Administrador), filtrable por acción y de solo lectura |
+| BD | Migración | El CSV de prueba importa 5 reservas con 4 avisos; importarlo otra vez no duplica nada |
+| BD | Consultar y exportar | *Total*, *Línea a línea* y exportación a CSV, JSON, XML y TXT |
+| BD | Docker | Con solo Docker Desktop, la aplicación funciona en `localhost:8080` |
 
 ---
 
 ## Seguridad
 
-| Medida | Qué protege |
-|---|---|
-| **BCrypt** (coste 11) | Las contraseñas no se guardan; solo su hash. Se verifica calculando el hash de lo escrito. |
-| **Mensaje de error único** en el login | Impide averiguar qué nombres de usuario existen. |
-| **Cookie `HttpOnly`**, caducidad de 8 h renovable | El JavaScript del navegador no puede leer la cookie (mitiga robos por XSS). |
-| **Revalidación de la sesión en cada petición** (`OnValidatePrincipal`) | Si un administrador desactiva a un usuario que tiene la sesión abierta, en su siguiente petición se borra su cookie y se le envía al login. |
-| **`[Authorize]` por defecto** en todas las páginas, `[AllowAnonymous]` solo en Login, Error y NotFound | Una página nueva queda protegida aunque se olvide indicarlo. |
-| **Roles** (`[Authorize(Roles = "Administrador")]`) | Usuarios y Auditoría solo para administradores; ocultar el enlace es solo visual, la protección real está en la página. |
-| **`/exportar` con `.RequireAuthorization()`** | La descarga de datos personales exige sesión iniciada. |
-| **Antiforgery token** en formularios y logout por `POST` | Protección frente a CSRF (otra web no puede cerrar la sesión ni enviar formularios en tu nombre). |
-| **Validación de `ReturnUrl`** | Solo se redirige a rutas internas (evita redirecciones a webs externas tras el login). |
-| **Secretos fuera del código** (*user-secrets* en desarrollo, `.env` en Docker) | Ninguna contraseña está escrita en el código C#. |
-| **Puerto de MySQL en Docker solo local** (`127.0.0.1:3307`) | Nadie de la misma red puede conectarse a la base de datos del contenedor. |
-| **Usuario de MySQL propio** (`airtortilla_app`) | La aplicación no usa `root`; solo tiene `SELECT, INSERT, UPDATE, DELETE` sobre `airtortilla`. |
-| **Nunca se audita la contraseña escrita** en un login fallido | Un error tipográfico de la contraseña real no queda registrado. |
+- **Contraseñas con BCrypt:** solo se guarda el hash.
+- **Mismo mensaje para cualquier fallo de login:** no revela qué usuarios existen.
+- **Todas las páginas protegidas por defecto**, y **Usuarios** y **Auditoría** solo para el rol Administrador.
+- **Sesión revalidada en cada petición:** un usuario desactivado es expulsado.
+- **Protección CSRF** en formularios y cierre de sesión.
+- **Ninguna contraseña en el código:** *user-secrets* en desarrollo y `.env` en Docker.
+- **La aplicación no usa `root`:** tiene su propio usuario de MySQL, y el puerto de la base de datos solo es accesible desde el propio ordenador.
 
 ---
 
-## Patrones de diseño aplicados
+## Patrones de diseño
 
-### DTO (Data Transfer Object)
-`ReservasDTO` es la fila plana del CSV: el formato en que los datos **viajan** (entran del CSV, salen a los ficheros exportados). Las entidades (`Reserva`, `Pasajero`…) son el formato en que los datos **viven** en MySQL.
-
-### DAO (Data Access Object)
-`IReservaDao` define qué se puede hacer con las reservas (importar, listar grupos, obtener por destino y fecha); `ReservaDaoMySql` lo implementa con EF Core y traduce entre DTO y entidades. Las páginas solo conocen la interfaz; la implementación se elige en una línea de `Program.cs`:
-
-```csharp
-builder.Services.AddScoped<IReservaDao, ReservaDaoMySql>();
-```
-
-Para volver a trabajar con ficheros bastaría con crear `ReservaDaoFicheros` y cambiar esa línea.
-
-### Factory
-En la entrega 1, `GenerarFicheros` tenía un `switch` que decidía el formato **y** contenía la lógica de escritura de los cuatro. Ahora cada formato es una clase (`ExportadorCsv`, `ExportadorJson`, `ExportadorXml`, `ExportadorTxt`) que implementa `IExportador`, y `ExportadorFactory.Crear("json")` devuelve la adecuada. Añadir un formato nuevo = una clase + una línea en la fábrica.
+- **DTO:** `ReservasDTO` transporta los datos entre el CSV, la base de datos y los ficheros exportados.
+- **DAO:** las páginas usan la interfaz `IReservaDao`; la implementación (`ReservaDaoMySql`) se elige en una línea de `Program.cs`. Volver a ficheros solo requeriría otra implementación.
+- **Factory:** `ExportadorFactory.Crear("json")` devuelve el exportador adecuado. Añadir un formato es una clase nueva más una línea en la fábrica.
 
 ---
 
-## Instalación y ejecución (Docker)
+## Formato del CSV
 
-La aplicación se ejecuta con **Docker**: no hace falta instalar .NET, MySQL ni Visual Studio. Docker crea la base de datos y arranca la aplicación con un solo comando.
+Mismo formato que la entrega 1: UTF-8, primera línea de cabecera, separado por comas y sin comas dentro de los campos.
 
-### Qué necesitas
-
-| Programa | Para qué | ¿Hay que instalarlo? |
+| Columna | Restricción | Ejemplo |
 |---|---|---|
-| **Docker Desktop** | Ejecutar la base de datos y la aplicación | Solo si no lo tienes: <https://www.docker.com/products/docker-desktop/> |
-| **GitHub Desktop** | Descargar el proyecto | Solo si no lo tienes (alternativa: descargar el ZIP, ver paso 1) |
-| Un navegador | Usar la aplicación | — |
+| Localizador | Obligatorio, máx. 20 | LOC001 |
+| Destino / Origen | Código ISO de 2 letras (Reino Unido es `GB`, no `UK`) | FR / ES |
+| NombrePasajero, PrimerApellido, SegundoApellido | Máx. 60 (el segundo apellido es opcional) | Juan, Perez, Gomez |
+| DocumentoIdentidad | Obligatorio, máx. 20 | 11111111A |
+| FechaReserva | `yyyy-MM-dd` | 2026-05-14 |
 
-No necesitas Git, .NET, MySQL ni Visual Studio.
+Las filas incorrectas se omiten con un aviso que indica la línea y el motivo. Los localizadores que ya existen no se vuelven a importar.
 
-### Paso 1 · Descargar el proyecto
+### CSV de prueba
 
-**Con GitHub Desktop:**
-1. Abre <https://github.com/marianaangarita/ProyectoFicherosMarianaAngarita>.
-2. Pulsa el botón verde **Code → Open with GitHub Desktop**. Se abrirá GitHub Desktop con la ventana de clonar ya rellenada.
-3. En **Local path** elige una carpeta **fuera de OneDrive** (por ejemplo `C:\Repos`). OneDrive puede bloquear archivos y provocar errores raros.
-4. Pulsa **Clone**.
-
-**Sin GitHub Desktop (ZIP):**
-1. Abre <https://github.com/marianaangarita/ProyectoFicherosMarianaAngarita>.
-2. Botón verde **Code → Download ZIP**.
-3. Descomprime el ZIP en una carpeta fuera de OneDrive.
-
-### Paso 2 · Abrir Docker Desktop
-
-Ábrelo desde el menú Inicio y espera a que abajo a la izquierda ponga **"Engine running"** (indicador verde).
-
-### Paso 3 · Abrir una terminal en la carpeta del proyecto
-
-La carpeta correcta es la que contiene el archivo **`docker-compose.yml`**. Cualquiera de estas formas vale:
-
-- **GitHub Desktop:** menú **Repository → Open in Command Prompt** (o *Open in PowerShell*).
-- **Explorador de Windows:** entra en la carpeta del proyecto → clic derecho en un hueco vacío → **Abrir en Terminal**.
-- **VS Code:** **File → Open Folder...** → elige la carpeta del proyecto → menú **Terminal → New Terminal**.
-
-Comprueba que estás en el sitio correcto escribiendo `dir`: debe aparecer `docker-compose.yml`.
-
-### Paso 4 · Arrancar la aplicación
-
-```
-docker compose up -d --build
-```
-
-- La **primera vez** tarda varios minutos: descarga MySQL y .NET (alrededor de 1 GB). Las siguientes veces son segundos.
-- Docker crea la base de datos, ejecuta el script `database/airtortilla_schema.sql` (tablas, roles y 249 países) y arranca la web.
-
-Espera un minuto y comprueba el estado:
-
-```
-docker compose ps
-```
-
-Debe salir `airtortilla-db` como **Up (healthy)** y `airtortilla-web` como **Up**.
-
-### Paso 5 · Entrar en la aplicación
-
-Abre **<http://localhost:8080>** e inicia sesión con el administrador de demostración:
-
-| Usuario | Contraseña |
-|---|---|
-| `admin` | `AdminDemo2026` |
-
-### Paso 6 · Probar
-
-1. **Importar CSV:** crea un archivo `reservas.csv` con el [ejemplo de prueba](#csv-de-prueba-para-copiar-y-pegar) y súbelo.
-2. **Reservas:** consulta un grupo en modalidad *Total* y *Línea a línea*, y expórtalo en los cuatro formatos.
-3. **Usuarios:** da de alta un usuario con rol *Empleado*, cierra sesión y entra con él: no verá *Usuarios* ni *Auditoría*.
-4. **Auditoría** (como `admin`): verás registrados todos los pasos anteriores.
-
-### Apagar y volver a empezar
-
-| Quiero... | Comando | ¿Se borran los datos? |
-|---|---|---|
-| Apagar la aplicación | `docker compose stop` | No |
-| Volver a encenderla | `docker compose start` | — |
-| Apagar y quitar los contenedores | `docker compose down` | No (quedan en el volumen) |
-| **Empezar de cero** (base de datos vacía) | `docker compose down -v` y después `docker compose up -d --build` | **Sí** |
-
-### Si algo falla
-
-| Síntoma | Solución |
-|---|---|
-| `docker: command not found` o error de conexión con Docker | Docker Desktop no está abierto o no ha terminado de arrancar. Espera a ver "Engine running". |
-| `no configuration file provided` | La terminal no está en la carpeta del proyecto. Repite el paso 3. |
-| Se cortó el primer arranque (se cerró Docker, se apagó el PC...) | La base de datos se quedó a medias: `docker compose down -v` y vuelve a lanzar `docker compose up -d --build`. |
-| `airtortilla-web` aparece como *Restarting* | Mira el error con `docker compose logs web --tail 50`. Lo más habitual se soluciona con `docker compose down -v` y volviendo a arrancar. |
-| `port is already allocated` (puerto 8080 ocupado) | Otro programa usa el puerto 8080. En `docker-compose.yml`, cambia `"8080:8080"` por `"8081:8080"` y entra en `http://localhost:8081`. |
-| Los botones no responden (por ejemplo, *Importar* no se activa) | Recarga la página con `F5`. Si se reiniciaron los contenedores con la página abierta, se pierde la conexión. |
-
-### Sobre las contraseñas del archivo `.env`
-
-El archivo `.env` contiene contraseñas **de demostración** (`RootDemo2026`, `AppDemo2026`, `AdminDemo2026`). Están en el repositorio a propósito, para que el proyecto funcione sin configurar nada. Solo sirven para la base de datos que Docker crea **en tu propio ordenador**, que además solo es accesible desde ese ordenador (`127.0.0.1`). No se usan en ningún otro sitio.
-
-### Qué hace Docker exactamente
-
-`docker-compose.yml` define dos contenedores:
-
-| Contenedor | Imagen | Detalles |
-|---|---|---|
-| `airtortilla-db` | `mysql:8.4` | Ejecuta el script de la base de datos la primera vez, crea el usuario `airtortilla_app`, guarda los datos en el volumen `airtortilla-datos`. Puerto `127.0.0.1:3307` (para conectar Workbench si se quiere). |
-| `airtortilla-web` | Construida con `AirTortilla.Web/Dockerfile` | Compila y publica la aplicación con el SDK de .NET 10 y la ejecuta en el puerto `8080`. Espera a que MySQL esté listo (*healthcheck*). |
-
-Ajustes necesarios para que funcione igual que en Windows:
-- `--lower-case-table-names=1`: MySQL en Linux distingue mayúsculas en los nombres de tabla y en Windows no. Sin esta opción, la aplicación busca `usuario` y la tabla se llama `Usuario`.
-- `TZ: Europe/Madrid`: sin ella, los contenedores usan la hora UTC y la auditoría registraría una hora menos.
-- El `Dockerfile` restaura y publica en un solo paso: si se separan, .NET 10 no incluye `blazor.web.js` y las páginas dejan de ser interactivas.
-
-## Formato del CSV de entrada
-
-Se mantiene el formato de la entrega 1. Los CSV de prueba no se incluyen en el repositorio: con esta especificación se puede crear uno propio.
-
-- Codificación: UTF-8.
-- La primera línea es una cabecera y se ignora.
-- Separador: coma (`,`). Los campos no pueden contener comas.
-- Columnas (en este orden):
-
-| Columna | Descripción | Restricción | Ejemplo |
-|---|---|---|---|
-| Localizador | Código de reserva. Varios pasajeros pueden compartirlo | Obligatorio, máx. 20 | AT1001 |
-| Destino | Código ISO 3166-1 alfa-2 | 2 letras, debe existir en `Pais` | FR |
-| Origen | Código ISO 3166-1 alfa-2 | 2 letras, debe existir en `Pais` | ES |
-| NombrePasajero | Nombre | Máx. 60 | Maria |
-| PrimerApellido | Primer apellido | Máx. 60 | Garcia |
-| SegundoApellido | Segundo apellido | Opcional, máx. 60 | Lopez |
-| DocumentoIdentidad | Identificador único del pasajero | Obligatorio, máx. 20 | 10000001A |
-| FechaReserva | Fecha de la reserva | Formato `yyyy-MM-dd` | 2026-05-14 |
-
-Ejemplo:
-
-```csv
-Localizador,Destino,Origen,NombrePasajero,PrimerApellido,SegundoApellido,DocumentoIdentidad,FechaReserva
-LOC001,FR,ES,Juan,Perez,Gomez,11111111A,2026-05-14
-LOC001,FR,ES,Juan,Perez,Gomez,22222222B,2026-05-14
-LOC002,IT,ES,Maria,Garcia,Lopez,66666666F,2026-05-14
-LOC003,FR,ES,Juan,Perez,Gomez,11111111A,2026-05-15
-```
-
-### CSV de prueba para copiar y pegar
-
-Los CSV de prueba no se incluyen en el repositorio. Para crear uno:
-
-1. Abre el **Bloc de notas** (o VS Code).
-2. Copia y pega el contenido siguiente.
-3. **Archivo → Guardar como...** → nombre `reservas.csv`, tipo **Todos los archivos**, codificación **UTF-8**.
+Los CSV no se incluyen en el repositorio. Copia esto en el Bloc de notas y guárdalo como `reservas.csv` (tipo *Todos los archivos*, codificación *UTF-8*):
 
 ```csv
 Localizador,Destino,Origen,NombrePasajero,PrimerApellido,SegundoApellido,DocumentoIdentidad,FechaReserva
@@ -357,104 +225,24 @@ LOC009,FR,ES,Elena,Diaz,Mora,45678901N,2026-05-17
 LOC009,IT,ES,Pablo,Diaz,Mora,56789012P,2026-05-17
 ```
 
-**Resultado esperado:** 5 reservas importadas, 10 pasajeros nuevos y 4 avisos:
+**Resultado esperado:** 5 reservas importadas, 10 pasajeros nuevos y 4 avisos (LOC006 con un código ISO incorrecto, LOC007 con una fecha imposible, LOC008 con columnas que faltan y LOC009 con dos destinos distintos). El pasajero `11111111A` aparece en LOC001 y LOC004, pero se guarda una sola vez.
 
-| Fila | Qué comprueba | Resultado |
-|---|---|---|
-| LOC001 | 5 pasajeros que coinciden en nombre, origen y destino | Se importa |
-| LOC004 | El pasajero `11111111A` ya está en LOC001 | Se importa; el pasajero **no** se duplica |
-| LOC005 | Sin segundo apellido | Se importa |
-| LOC006 | `UK` no es un código ISO (Reino Unido es `GB`) | Aviso |
-| LOC007 | Fecha `2026-13-45` no válida | Aviso |
-| LOC008 | Faltan columnas | Aviso |
-| LOC009 | Mismo localizador con dos destinos distintos | Aviso |
-
-Si se importa **otra vez** el mismo archivo, el resultado es 0 reservas importadas: la importación no duplica datos.
-
-### Reglas de validación
-
-Las filas incorrectas se omiten con un aviso (línea o localizador y motivo); el resto se importa.
-
-| Caso | Resultado |
-|---|---|
-| Fila vacía | Se ignora |
-| Distinto de 8 campos | Aviso con número de línea |
-| Fecha no válida | Aviso con número de línea |
-| Longitudes superadas o localizador/documento vacío | Aviso con número de línea |
-| Código ISO inexistente (p. ej. `UK`; Reino Unido es `GB`) | Aviso con el localizador |
-| Mismo localizador con distinto origen, destino o fecha | Se rechaza el localizador completo |
-| Localizador que ya existe en la BD | Se omite (no se sobrescribe ni se duplica) |
-| Documento repetido dentro del mismo localizador | Se guarda una sola vez |
-| Mismo documento en distintos localizadores | Un único pasajero asociado a varias reservas |
-
----
-
-## Ficheros exportados
-
-Desde **Reservas**, cada combinación de destino y fecha se exporta con el formato `AirTortilla_XX_YYYY_MM_DD.<ext>` y se descarga en el navegador.
-
-| Formato | Contenido |
-|---|---|
-| `.csv` | Cabecera + una línea por pasajero, separada por comas |
-| `.json` | Lista de objetos con sangría (`JsonSerializer`) |
-| `.xml` | Lista de objetos (`XmlSerializer`) |
-| `.txt` | Una línea por pasajero, campos separados por ` \| `, sin cabecera |
-
-En CSV y TXT la fecha se escribe como `yyyy-MM-dd`. En JSON y XML se serializa el `DateTime` completo (`2026-05-14T00:00:00`).
-
-**Ordenación:** los grupos se ordenan por destino y fecha; dentro de cada fichero, por `Localizador` y, a igualdad, por `DocumentoIdentidad`. La ordenación la hace MySQL (`ORDER BY`).
-
----
-
-## Rendimiento y complejidad
-
-Siendo *n* el número de filas del CSV:
-
-| Fase | Operación | Complejidad |
-|---|---|---|
-| Lectura y validación de formato | Recorrer las *n* líneas | O(n) |
-| Comprobación de países, localizadores y pasajeros existentes | **3 consultas en bloque** + búsquedas en `HashSet` / `Dictionary` | O(n) |
-| Agrupación por localizador | `GroupBy` | O(n) |
-| Inserción | Un único `SaveChanges` por fase | O(n) |
-| Consulta de un grupo | `WHERE` + `ORDER BY` en MySQL (índice `Destino, FechaReserva`) | O(k log k), *k* = filas del grupo |
-
-**Decisión clave:** en lugar de consultar la base de datos por cada fila (3 × *n* consultas, el llamado problema N+1), se cargan de una vez los países, los localizadores y los pasajeros ya existentes, y se comprueba en memoria. Con 10.000 filas son 3 consultas en lugar de 30.000.
-
-Otras decisiones:
-- La auditoría muestra solo los 200 registros más recientes (`Take(200)`) y el filtro por acción se aplica en MySQL, no en memoria.
-- Se usa `IDbContextFactory` (recomendación oficial para Blazor Server): cada operación crea y libera su propio contexto.
+Cada grupo de destino y fecha se exporta como `AirTortilla_XX_YYYY_MM_DD` en CSV, JSON, XML o TXT.
 
 ---
 
 ## Conclusión
 
-La entrega 2 cumple las tres User Stories y la migración a base de datos relacional:
+La entrega cumple las tres User Stories y la migración a MySQL, mantiene todas las funciones de la entrega 1 desde una interfaz web y se ejecuta con un solo comando gracias a Docker.
 
-- **US1:** inicio y cierre de sesión con contraseñas en BCrypt, todas las páginas protegidas por defecto y accesos registrados.
-- **US2:** alta, activación y desactivación de usuarios restringidas al rol Administrador.
-- **US3:** auditoría de altas, modificaciones (con valores antes/después), accesos, importaciones y exportaciones, consultable desde la aplicación.
-- **Migración:** todas las funciones de la entrega 1 (cargar CSV, dividir por destino y fecha, consultar en modalidad total y línea a línea, exportar a cuatro formatos) funcionan ahora sobre MySQL desde una interfaz web.
+**Limitaciones conocidas**
+- Los campos del CSV no pueden contener comas.
+- Un usuario desactivado que esté en una página abierta no es expulsado hasta que navega o recarga.
+- El usuario de MySQL de la aplicación podría borrar la auditoría con acceso directo a la base de datos (desde la aplicación no es posible).
+- El `.env` con contraseñas de demostración está en el repositorio para facilitar la evaluación; en un entorno real no se subiría.
 
-- **Docker:** la aplicación y la base de datos se arrancan con un solo comando, sin instalar .NET ni MySQL.
-
-Se han aplicado los patrones **DTO**, **DAO** y **Factory**, y se ha resuelto la limitación de la entrega 1 de tener los códigos ISO escritos en el código.
-
-### Limitaciones conocidas
-
-- Los campos del CSV no pueden contener comas (la lectura no interpreta comillas).
-- La importación carga en memoria las filas del CSV; para ficheros muy grandes convendría importar por lotes.
-- La revalidación de la sesión se hace en cada **petición HTTP**. Si el usuario desactivado está dentro de una página interactiva (por ejemplo, Reservas), puede seguir usándola hasta que navegue, recargue o descargue un fichero; en ese momento se le expulsa.
-- La revalidación hace una consulta a MySQL por petición. Para el volumen de la práctica es despreciable; con mucho tráfico convendría cachear el estado unos minutos.
-- El usuario de MySQL `airtortilla_app` tiene permiso `DELETE` sobre todas las tablas, incluida `Auditoria`: desde la aplicación no se puede borrar, pero sí con acceso directo a la BD.
-- No hay recuperación ni cambio de contraseña por parte del usuario.
-- El archivo `.env` con contraseñas de demostración está en el repositorio para facilitar la evaluación. En un entorno real no se subiría y cada instalación tendría sus propias contraseñas.
-
-### Posibles mejoras
-
-- Revalidar también las páginas interactivas sin esperar a una petición HTTP (`RevalidatingServerAuthenticationStateProvider`).
-- Dar a `airtortilla_app` solo `SELECT` e `INSERT` sobre `Auditoria`.
-- Usar CsvHelper para admitir campos entre comillas e importar por lotes.
-- Cambio de contraseña y bloqueo temporal tras varios intentos fallidos.
+**Posibles mejoras**
+- Admitir campos entre comillas en el CSV (CsvHelper).
+- Cambio de contraseña y bloqueo tras varios intentos fallidos.
 - Paginación en la auditoría y en las reservas.
-- Pruebas unitarias (validación del CSV, DAO, exportadores).
-- Publicar la imagen de la aplicación en un registro (Docker Hub o GitHub Container Registry) para no tener que compilarla en cada equipo.
+- Pruebas unitarias.
