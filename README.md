@@ -2,19 +2,19 @@
 
 ## Índice
 
-1. [Instalación y ejecución](#instalación-y-ejecución)
-2. [Objetivos de la entrega 2](#objetivos-de-la-entrega-2)
-3. [Migración de tecnología](#migración-de-tecnología)
-4. [Arquitectura](#arquitectura)
-5. [Modelo de datos](#modelo-de-datos)
-6. [User Stories y tareas medibles](#user-stories-y-tareas-medibles)
-7. [Seguridad](#seguridad)
-8. [Patrones de diseño](#patrones-de-diseño)
-9. [Formato del CSV](#formato-del-csv)
+1. [Objetivos de la entrega](#objetivos-de-la-entrega)
+2. [Instalación y ejecución](#instalación-y-ejecución)
+3. [Formato del CSV](#formato-del-csv)
+4. [User Stories y tareas medibles](#user-stories-y-tareas-medibles)
+5. [Migración de tecnología](#migración-de-tecnología)
+6. [Arquitectura](#arquitectura)
+7. [Modelo de datos](#modelo-de-datos)
+8. [Seguridad](#seguridad)
+9. [Patrones de diseño](#patrones-de-diseño)
 10. [Conclusión](#conclusión)
-
+    
 ---
-## Objetivos de la entrega 
+## Objetivos de la entrega
 
 | ID | User Story |
 |---|---|
@@ -66,6 +66,27 @@ Abre **<http://localhost:8080>** con el usuario **`admin`** y la contraseña **`
 
 Para probar, importa el [CSV de prueba](#csv-de-prueba), consulta y exporta las reservas, da de alta un usuario *Empleado* y revisa la *Auditoría*.
 
+
+### Comandos útiles
+
+| Quiero... | Comando |
+|---|---|
+| Apagar | `docker compose stop` |
+| Volver a encender | `docker compose start` |
+| Empezar de cero (borra los datos) | `docker compose down -v` y después `docker compose up -d --build` |
+
+### Si algo falla
+
+| Problema | Solución |
+|---|---|
+| Error de conexión con Docker | Docker Desktop no está abierto o aún no pone "Engine running". |
+| `no configuration file provided` | La terminal no está en la carpeta del proyecto. |
+| Se cortó el primer arranque o `airtortilla-web` sale como *Restarting* | `docker compose down -v` y vuelve a arrancar. |
+| Puerto 8080 ocupado | En `docker-compose.yml` cambia `"8080:8080"` por `"8081:8080"` y entra en `localhost:8081`. |
+| Los botones no responden | Recarga la página con `F5`. |
+
+> Las contraseñas del archivo `.env` son **de demostración**: solo sirven para la base de datos que Docker crea en tu propio ordenador, accesible únicamente desde él.
+
 ---
 
 ## Formato del CSV
@@ -112,26 +133,21 @@ Cada grupo de destino y fecha se exporta como `AirTortilla_XX_YYYY_MM_DD` en CSV
 
 ---
 
+## User Stories y tareas medibles
 
-### Comandos útiles
-
-| Quiero... | Comando |
-|---|---|
-| Apagar | `docker compose stop` |
-| Volver a encender | `docker compose start` |
-| Empezar de cero (borra los datos) | `docker compose down -v` y después `docker compose up -d --build` |
-
-### Si algo falla
-
-| Problema | Solución |
-|---|---|
-| Error de conexión con Docker | Docker Desktop no está abierto o aún no pone "Engine running". |
-| `no configuration file provided` | La terminal no está en la carpeta del proyecto. |
-| Se cortó el primer arranque o `airtortilla-web` sale como *Restarting* | `docker compose down -v` y vuelve a arrancar. |
-| Puerto 8080 ocupado | En `docker-compose.yml` cambia `"8080:8080"` por `"8081:8080"` y entra en `localhost:8081`. |
-| Los botones no responden | Recarga la página con `F5`. |
-
-> Las contraseñas del archivo `.env` son **de demostración**: solo sirven para la base de datos que Docker crea en tu propio ordenador, accesible únicamente desde él.
+| US | Tarea | Cómo se comprueba |
+|---|---|---|
+| US1 | Contraseñas con BCrypt | En la tabla `usuario` de la base de datos, la contraseña no se ve: aparece un código cifrado que empieza por `$2a$11$` |
+| US1 | Iniciar y cerrar sesión | Con usuario y contraseña correctos, la aplicación te saluda por tu nombre. Si alguno de los dos está mal, muestra el mensaje "Usuario o contraseña incorrectos" |
+| US1 | Páginas protegidas | Si alguien que no ha iniciado sesión intenta entrar en una página, por ejemplo escribiendo `localhost:8080/reservas`, la aplicación le manda a la pantalla de login |
+| US2 | Alta de usuarios solo para el Administrador | Un usuario con rol Empleado no ve la opción *Usuarios* en el menú. Si escribe la dirección `localhost:8080/usuarios` a mano, la aplicación le muestra "Acceso denegado" |
+| US2 | Validación del alta | El nombre debe tener entre 3 y 50 caracteres, la contraseña al menos 8, el rol es obligatorio y no puede haber dos usuarios con el mismo nombre |
+| US2 | Activar y desactivar usuarios | El Administrador puede desactivar a un usuario desde la página *Usuarios*. Ese usuario ya no puede iniciar sesión, y si en ese momento estaba usando la aplicación, se le saca al login en cuanto cambia de página |
+| US3 | Registro de auditoría | Cada inicio de sesión (correcto o fallido), alta, modificación, importación y exportación queda apuntado: quién lo hizo, cuándo y qué cambió |
+| US3 | Consulta de la auditoría | Solo el Administrador ve la página *Auditoría*. Muestra todo lo apuntado, permite filtrar por tipo de acción y no deja editar ni borrar nada |
+| BD | Migración a base de datos | Al importar el CSV de prueba se guardan 5 reservas y aparecen 4 avisos. Si se importa otra vez, no se duplica nada |
+| BD | Consultar y exportar | En *Reservas* se puede ver cada grupo entero (*Total*) o línea a línea, y descargarlo en CSV, JSON, XML o TXT |
+|  Extra  | Docker | Con solo Docker Desktop instalado, la aplicación funciona en `localhost:8080` |
 
 ---
 
@@ -176,25 +192,7 @@ Decisiones principales:
 - **Reserva N:M Pasajero**, resuelta con la tabla intermedia `ReservaPasajero`. Un pasajero que viaja en dos reservas se guarda una sola vez.
 - **Origen, destino y fecha son de la reserva**: todos los pasajeros de un localizador viajan juntos.
 - **Los usuarios se desactivan, no se borran**, para no perder su rastro en la auditoría.
-- **`Usuario.CreadoPorId`** guarda qué administrador dio de alta a cada usuario.
-
----
-
-## User Stories y tareas medibles
-
-| US | Tarea | Cómo se comprueba |
-|---|---|---|
-| US1 | Contraseñas con BCrypt | En la tabla `usuario` de la base de datos, la contraseña no se ve: aparece un código cifrado que empieza por `$2a$11$` |
-| US1 | Iniciar y cerrar sesión | Con usuario y contraseña correctos, la aplicación te saluda por tu nombre. Si alguno de los dos está mal, muestra el mensaje "Usuario o contraseña incorrectos" |
-| US1 | Páginas protegidas | Si alguien que no ha iniciado sesión intenta entrar en una página, por ejemplo escribiendo `localhost:8080/reservas`, la aplicación le manda a la pantalla de login |
-| US2 | Alta de usuarios solo para el Administrador | Un usuario con rol Empleado no ve la opción *Usuarios* en el menú. Si escribe la dirección `localhost:8080/usuarios` a mano, la aplicación le muestra "Acceso denegado" |
-| US2 | Validación del alta | El nombre debe tener entre 3 y 50 caracteres, la contraseña al menos 8, el rol es obligatorio y no puede haber dos usuarios con el mismo nombre |
-| US2 | Activar y desactivar usuarios | El Administrador puede desactivar a un usuario desde la página *Usuarios*. Ese usuario ya no puede iniciar sesión, y si en ese momento estaba usando la aplicación, se le saca al login en cuanto cambia de página |
-| US3 | Registro de auditoría | Cada inicio de sesión (correcto o fallido), alta, modificación, importación y exportación queda apuntado: quién lo hizo, cuándo y qué cambió |
-| US3 | Consulta de la auditoría | Solo el Administrador ve la página *Auditoría*. Muestra todo lo apuntado, permite filtrar por tipo de acción y no deja editar ni borrar nada |
-| BD | Migración a base de datos | Al importar el CSV de prueba se guardan 5 reservas y aparecen 4 avisos. Si se importa otra vez, no se duplica nada |
-| BD | Consultar y exportar | En *Reservas* se puede ver cada grupo entero (*Total*) o línea a línea, y descargarlo en CSV, JSON, XML o TXT |
-| BD | Docker | Con solo Docker Desktop instalado, la aplicación funciona en `localhost:8080` |
+- **Cada usuario guarda qué administrador lo dio de alta** (columna `CreadoPorId`, que apunta a otro usuario de la misma tabla).
 
 ---
 
@@ -213,28 +211,19 @@ Decisiones principales:
 
 ## Patrones de diseño
 
-- **DTO:** `ReservasDTO` transporta los datos entre el CSV, la base de datos y los ficheros exportados.
-- **DAO:** las páginas usan la interfaz `IReservaDao`; la implementación (`ReservaDaoMySql`) se elige en una línea de `Program.cs`. Volver a ficheros solo requeriría otra implementación.
-- **Factory:** `ExportadorFactory.Crear("json")` devuelve el exportador adecuado. Añadir un formato es una clase nueva más una línea en la fábrica.
+- **DTO** (`AirTortilla.Web/DTO/`): `ReservasDTO` transporta los datos entre el CSV, la base de datos y los ficheros exportados.
+- **DAO** (`AirTortilla.Web/Data/DAO/`): las páginas usan la interfaz `IReservaDao`; la implementación (`ReservaDaoMySql`) se elige en una línea de `Program.cs`. Volver a ficheros solo requeriría otra implementación.
+- **Factory** (`AirTortilla.Web/Data/Exportacion/`): `ExportadorFactory.Crear("json")` devuelve el exportador adecuado. Añadir un formato es una clase nueva más una línea en la fábrica.
   
-```
-AirTortilla.Web/
-├── Components/Pages/   Login, Inicio, Importar, Reservas, Usuarios, Auditoria
-├── Data/
-│   ├── Entities/       Entidades de EF Core
-│   ├── DAO/            IReservaDao + ReservaDaoMySql
-│   ├── CSV/            LectorCsvReservas
-│   ├── Exportacion/    Exportadores + ExportadorFactory
-│   └── Auditor.cs      Registro de auditoría
-├── DTO/                ReservasDTO
-└── Program.cs          Configuración (BD, login, rutas)
-database/               Script SQL y diagrama ER
-docker-compose.yml      MySQL + aplicación
-```
+---
 
 ## Conclusión
 
-La entrega cumple las tres User Stories y la migración a MySQL, mantiene todas las funciones de la entrega 1 desde una interfaz web y se ejecuta con un solo comando gracias a Docker.
+La aplicación cumple las tres User Stories: los empleados inician sesión, el administrador da de alta y gestiona usuarios, y todos los cambios quedan registrados en la auditoría.
+
+Además, los datos ya no se guardan en ficheros sino en una base de datos MySQL. Todo lo que hacía la entrega 1 (importar el CSV, consultar las reservas y exportarlas) se puede hacer ahora desde una página web.
+
+Por último, gracias a Docker, cualquiera puede ponerla en marcha con un solo comando, sin instalar nada más que Docker Desktop.
 
 **Limitaciones conocidas**
 - Los campos del CSV no pueden contener comas.
