@@ -59,7 +59,7 @@ Para probar, importa el [CSV de prueba](#csv-de-prueba), consulta y exporta las 
 
 ## Formato del CSV
 
-Mismo formato que la entrega 1: UTF-8, primera línea de cabecera, separado por comas y sin comas dentro de los campos.
+Mismo formato que la entrega 1: primera línea de cabecera, separado por comas y sin comas dentro de los campos.
 
 | Columna | Restricción | Ejemplo |
 |---|---|---|
