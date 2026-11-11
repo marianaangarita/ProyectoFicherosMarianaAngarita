@@ -1,0 +1,43 @@
+# AirTortilla: base de datos MySQL más aplicación web, con un solo comando:
+#   docker compose up --build
+
+services:
+
+  db:
+    image: mysql:8.4
+    command: --lower-case-table-names=1   
+    container_name: airtortilla-db
+    environment:
+      TZ: Europe/Madrid                    
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: airtortilla
+      MYSQL_USER: airtortilla_app          
+      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD}
+    volumes:
+      - ./database/airtortilla_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - airtortilla-datos:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3307:3306"   # solo accesible desde este ordenador
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  web:
+    build: ./AirTortilla.Web
+    container_name: airtortilla-web
+    depends_on:
+      db:
+        condition: service_healthy   
+    restart: on-failure
+    environment:
+      TZ: Europe/Madrid
+      ConnectionStrings__AirTortilla: "server=db;port=3306;database=airtortilla;user=airtortilla_app;password=${MYSQL_APP_PASSWORD}"
+      AdminInicial__Password: ${ADMIN_PASSWORD}
+    ports:
+      - "8080:8080"
+
+volumes:
+  airtortilla-datos:

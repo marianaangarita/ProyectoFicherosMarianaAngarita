@@ -1,0 +1,146 @@
+﻿@page "/reservas"
+@rendermode InteractiveServer
+@using AirTortilla.Web.Data.Dao
+@using AirTortilla.Web.Dto
+@inject IReservaDao ReservaDao
+
+<PageTitle>Reservas</PageTitle>
+
+<h1>Reservas por destino y fecha</h1>
+
+@if (grupos is null)
+{
+    <p><em>Cargando...</em></p>
+}
+else if (grupos.Count == 0)
+{
+    <p>No hay reservas todavía. <a href="importar">Importa un CSV</a>.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Fichero</th>
+                <th>Destino</th>
+                <th>Fecha</th>
+                <th>Pasajeros</th>
+                <th>Consultar</th>
+                <th>Exportar</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var g in grupos)
+            {
+                <tr>
+                    <td><code>@NombreFichero(g)</code></td>
+                    <td>@g.Destino</td>
+                    <td>@g.Fecha.ToString("dd/MM/yyyy")</td>
+                    <td>@g.TotalPasajeros</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => Abrir(g, Modo.Total)">Total</button>
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => Abrir(g, Modo.LineaALinea)">Línea a línea</button>
+                    </td>
+                    <td>
+                        @foreach (var ext in new[] { "csv", "json", "xml", "txt" })
+                        {
+                            <a class="btn btn-sm btn-outline-success me-1"
+                               href="@($"exportar/{g.Destino}/{g.Fecha:yyyy-MM-dd}/{ext}")"
+                               download data-enhance-nav="false">@ext</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (seleccionado is not null)
+{
+    <h2 class="h4 mt-4">@NombreFichero(seleccionado) — @(modo == Modo.Total ? "modalidad TOTAL" : "modalidad LÍNEA A LÍNEA")</h2>
+
+    @if (modo == Modo.Total)
+    {
+        <table class="table table-sm table-bordered">
+            <thead>
+                <tr>
+                    <th>Localizador</th>
+                    <th>Destino</th>
+                    <th>Origen</th>
+                    <th>Nombre</th>
+                    <th>1.er apellido</th>
+                    <th>2.º apellido</th>
+                    <th>Documento</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in filas)
+                {
+                    <tr>
+                        <td>@r.Localizador</td>
+                        <td>@r.Destino</td>
+                        <td>@r.Origen</td>
+                        <td>@r.NombrePasajero</td>
+                        <td>@r.PrimerApellido</td>
+                        <td>@r.SegundoApellido</td>
+                        <td>@r.DocumentoIdentidad</td>
+                        <td>@r.FechaReserva.ToString("yyyy-MM-dd")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        @if (indice < filas.Count)
+        {
+            <p>Línea @(indice + 1) de @filas.Count</p>
+            <pre class="p-3 bg-light border">@filas[indice].ToTxtLine()</pre>
+            <button class="btn btn-primary" @onclick="Siguiente">Siguiente línea</button>
+            <button class="btn btn-outline-danger" @onclick="Salir">Salir</button>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                @(interrumpido ? "Lectura interrumpida por el usuario." : "Fin del fichero.")
+            </div>
+        }
+    }
+}
+
+@code {
+    private enum Modo { Total, LineaALinea }
+
+    private List<ResumenGrupo>? grupos;
+    private ResumenGrupo? seleccionado;
+    private List<ReservasDTO> filas = [];
+    private Modo modo;
+    private int indice;
+    private bool interrumpido;
+
+    protected override async Task OnInitializedAsync()
+    {
+        grupos = await ReservaDao.ObtenerGruposAsync();
+    }
+
+    private async Task Abrir(ResumenGrupo grupo, Modo nuevoModo)
+    {
+        seleccionado = grupo;
+        modo = nuevoModo;
+        indice = 0;
+        interrumpido = false;
+        filas = await ReservaDao.ObtenerPorDestinoYFechaAsync(grupo.Destino, grupo.Fecha);
+    }
+
+    private void Siguiente() => indice++;
+
+    private void Salir()
+    {
+        interrumpido = true;
+        indice = filas.Count;
+    }
+
+    // Mismo formato de nombre que exige el enunciado: AirTortilla_XX_YYYY_MM_DD
+    private static string NombreFichero(ResumenGrupo g) => $"AirTortilla_{g.Destino}_{g.Fecha:yyyy_MM_dd}";
+}

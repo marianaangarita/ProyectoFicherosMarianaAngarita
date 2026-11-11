@@ -1,15 +1,15 @@
 ﻿using System;
-namespace ProyectoReservas.DTO;
+namespace AirTortilla.Web.Dto;
 
 public class ReservasDTO
 {
-    public string Localizador { get; set; } //hay un localizador unico por reserva, dentro del localizador puede haber varios pasajeros
-    public string Destino { get; set; }
-    public string Origen { get; set; }
-    public string NombrePasajero { get; set; }
-    public string PrimerApellido { get; set; }
-    public string SegundoApellido { get; set; }
-    public string DocumentoIdentidad { get; set; } //DNI, funciona como id unico de pasajero
+    public string Localizador { get; set; } = ""; //hay un localizador unico por reserva, dentro del localizador puede haber varios pasajeros
+    public string Destino { get; set; } = "";
+    public string Origen { get; set; } = "";
+    public string NombrePasajero { get; set; } = "";
+    public string PrimerApellido { get; set; } = "";
+    public string SegundoApellido { get; set; } = "";
+    public string DocumentoIdentidad { get; set; } = ""; //DNI, funciona como id unico de pasajero
     public DateTime FechaReserva { get; set; }
 
     // Constructor vacío requerido por el serializador XML de C#

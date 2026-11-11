@@ -1,164 +1,238 @@
+# AirTortilla · Gestión de reservas
 
-## Arquitectura del Sistema
+## Índice
 
-A continuación se detalla el flujo de datos desde la lectura del CSV hasta la generación de los ficheros:
+1. [Objetivos de la entrega](#objetivos-de-la-entrega)
+2. [Instalación y ejecución](#instalación-y-ejecución)
+3. [Formato del CSV](#formato-del-csv)
+4. [User Stories y tareas medibles](#user-stories-y-tareas-medibles)
+5. [Migración de tecnología](#migración-de-tecnología)
+6. [Arquitectura](#arquitectura)
+7. [Modelo de datos](#modelo-de-datos)
+8. [Seguridad](#seguridad)
+9. [Patrones de diseño](#patrones-de-diseño)
+10. [Conclusión](#conclusión)
+    
+---
+## Objetivos de la entrega
 
-![Diagrama de Arquitectura](assets/AirTortilla_Diagrama.drawio.png)
+| ID | User Story |
+|---|---|
+| **US1** | Como **Empleado** quiero poder hacer *log in* para acceder a los recursos de la compañía. |
+| **US2** | Como **Administrador** quiero poder dar de alta usuarios para garantizar la seguridad interna de la aplicación. |
+| **US3** | Como **Administrador** quiero mantener la trazabilidad de las modificaciones. |
 
-## Requisitos y ejecución
+Además, se migra toda la persistencia a una **base de datos relacional** y se añaden contenedores (Docker).
 
-- .NET 10 SDK (comprobar con `dotnet --version`).
-- Visual Studio 2022 o superior (opcional; también se puede ejecutar por terminal).
+---
 
-### Opción A: terminal (recomendada, funciona en cualquier PC)
+## Instalación y ejecución
 
-Desde la carpeta del proyecto (la que contiene el `.csproj`):
+Solo necesitas **Docker Desktop** y **GitHub Desktop** (o descargar el ZIP).
 
-    dotnet run
+### 1. Descargar el proyecto
 
-`dotnet run` restaura los paquetes y compila automáticamente antes de ejecutar.
+- **Con GitHub Desktop:** pulsa **Code → Open with GitHub Desktop** y después **Clone**. Puedes dejar la carpeta que propone, salvo que esté dentro de OneDrive (en ese caso elige otra, por ejemplo `C:\Repos`).
+- **Sin GitHub Desktop:** **Code → Download ZIP** y descomprímelo fuera de OneDrive.
 
-### Opción B: Visual Studio
+### 2. Abrir Docker Desktop
 
-Al clonar el repositorio en un equipo nuevo, la carpeta `obj/` no existe
-(no se sube al repositorio). Si al compilar aparece el error
-`No se encuentra el archivo de recursos ...\obj\project.assets.json`:
+Espera a que ponga **"Engine running"**.
 
-1. En el Explorador de soluciones, clic derecho sobre la solución → **Restaurar paquetes NuGet**.
-2. **Compilar → Recompilar solución**.
+### 3. Abrir el proyecto en Visual Studio Code
 
-Para que no vuelva a ocurrir, activar en
-**Herramientas → Opciones → Administrador de paquetes NuGet → General**
-las dos opciones de restauración automática de paquetes.
+1. En GitHub Desktop, pulsa **Open in Visual Studio Code** (o en VS Code: **File → Open Folder...** y elige la carpeta del proyecto).
+2. Abre una terminal: menú **Terminal → New Terminal**.
 
-### Ubicación de los ficheros generados
+La terminal se abre directamente en la carpeta del proyecto, la que contiene `docker-compose.yml`.
 
-Los ficheros se crean en el directorio de ejecución, que el programa muestra al terminar
-la generación (con Visual Studio: `bin/Debug/net10.0/`; con `dotnet run`: la carpeta
-desde la que se lanza el comando). Para consultarlos con las opciones 2 y 3 basta con
-indicar el nombre del fichero, no la ruta completa.
+### 4. Arrancar
 
-## Formato del CSV de entrada
+```
+docker compose up -d --build
+```
 
-- Codificación: UTF-8.
-- La primera línea es una cabecera y se ignora.
-- Separador: coma (`,`). Los campos no pueden contener comas.
-- Columnas (en este orden):
+La primera vez tarda unos minutos (descarga MySQL y .NET). Después comprueba que los dos contenedores están en marcha:
 
-| Columna | Descripción | Ejemplo |
+```
+docker compose ps
+```
+
+`airtortilla-db` debe aparecer como **Up (healthy)** y `airtortilla-web` como **Up**.
+
+### 5. Entrar
+
+Abre **<http://localhost:8080>** con el usuario **`admin`** y la contraseña **`AdminDemo2026`**.
+
+Para probar, importa el [CSV de prueba](#csv-de-prueba), consulta y exporta las reservas, da de alta un usuario *Empleado* y revisa la *Auditoría*.
+
+
+### Comandos útiles
+
+| Quiero... | Comando |
+|---|---|
+| Apagar | `docker compose stop` |
+| Volver a encender | `docker compose start` |
+| Empezar de cero (borra los datos) | `docker compose down -v` y después `docker compose up -d --build` |
+
+### Si algo falla
+
+| Problema | Solución |
+|---|---|
+| Error de conexión con Docker | Docker Desktop no está abierto o aún no pone "Engine running". |
+| `no configuration file provided` | La terminal no está en la carpeta del proyecto. |
+| Se cortó el primer arranque o `airtortilla-web` sale como *Restarting* | `docker compose down -v` y vuelve a arrancar. |
+| Puerto 8080 ocupado | En `docker-compose.yml` cambia `"8080:8080"` por `"8081:8080"` y entra en `localhost:8081`. |
+| Los botones no responden | Recarga la página con `F5`. |
+
+> Las contraseñas del archivo `.env` son **de demostración**: solo sirven para la base de datos que Docker crea en tu propio ordenador, accesible únicamente desde él.
+
+---
+
+## Formato del CSV
+
+Mismo formato que la entrega 1: primera línea de cabecera, separado por comas y sin comas dentro de los campos.
+
+| Columna | Restricción | Ejemplo |
 |---|---|---|
-| Localizador | Código único de reserva. Varios pasajeros pueden compartirlo | AT1001 |
-| Destino | Código ISO 3166-1 alfa-2 del país | FR |
-| Origen | Código ISO 3166-1 alfa-2 del país | ES |
-| NombrePasajero | Nombre | Maria |
-| PrimerApellido | Primer apellido | Garcia |
-| SegundoApellido | Segundo apellido | Lopez |
-| DocumentoIdentidad | Identificador único del pasajero | 10000001A |
-| FechaReserva | Formato `yyyy-MM-dd` | 2026-05-14 |
+| Localizador | Obligatorio, máx. 20 | LOC001 |
+| Destino / Origen | Código ISO de 2 letras (Reino Unido es `GB`, no `UK`) | FR / ES |
+| NombrePasajero, PrimerApellido, SegundoApellido | Máx. 60 (el segundo apellido es opcional) | Juan, Perez, Gomez |
+| DocumentoIdentidad | Obligatorio, máx. 20 | 11111111A |
+| FechaReserva | `yyyy-MM-dd` | 2026-05-14 |
 
-- Ejemplo:
+Las filas incorrectas se omiten con un aviso que indica la línea y el motivo. Los localizadores que ya existen no se vuelven a importar.
+
+### CSV de prueba
+
+Los CSV no se incluyen en el repositorio. Copia esto en el Bloc de notas y guárdalo como `reservas.csv`:
 
 ```csv
 Localizador,Destino,Origen,NombrePasajero,PrimerApellido,SegundoApellido,DocumentoIdentidad,FechaReserva
 LOC001,FR,ES,Juan,Perez,Gomez,11111111A,2026-05-14
-LOC002,FR,ES,Juan,Perez,Gomez,22222222B,2026-05-14
-LOC003,FR,ES,Juan,Perez,Gomez,33333333C,2026-05-14
-LOC004,FR,ES,Juan,Perez,Gomez,44444444D,2026-05-14
-LOC005,FR,ES,Juan,Perez,Gomez,55555555E,2026-05-14
+LOC001,FR,ES,Juan,Perez,Gomez,22222222B,2026-05-14
+LOC001,FR,ES,Juan,Perez,Gomez,33333333C,2026-05-14
+LOC001,FR,ES,Juan,Perez,Gomez,44444444D,2026-05-14
+LOC001,FR,ES,Juan,Perez,Gomez,55555555E,2026-05-14
+LOC002,IT,ES,Maria,Garcia,Lopez,66666666F,2026-05-14
+LOC002,IT,ES,Maria,Garcia,Lopez,77777777G,2026-05-14
+LOC003,FR,ES,Ana,Martin,Ruiz,88888888H,2026-05-15
+LOC003,FR,ES,Ana,Martin,Ruiz,99999999J,2026-05-15
+LOC004,FR,ES,Juan,Perez,Gomez,11111111A,2026-05-15
+LOC005,DE,PT,Lucas,Silva,,12345678K,2026-05-16
+LOC006,UK,ES,Peter,Smith,,23456789L,2026-05-16
+LOC007,FR,ES,Laura,Sanz,Gil,34567890M,2026-13-45
+LOC008,FR,ES,Carlos,Ruiz
+LOC009,FR,ES,Elena,Diaz,Mora,45678901N,2026-05-17
+LOC009,IT,ES,Pablo,Diaz,Mora,56789012P,2026-05-17
 ```
 
-### Restricciones
+**Resultado esperado:** 5 reservas importadas, 10 pasajeros nuevos y 4 avisos (LOC006 con un código ISO incorrecto, LOC007 con una fecha imposible, LOC008 con columnas que faltan y LOC009 con dos destinos distintos). El pasajero `11111111A` aparece en LOC001 y LOC004, pero se guarda una sola vez.
 
-- **Ningún campo puede contener comas.** El programa separa los campos con `Split(',')`
-  y no admite comillas, así que una coma dentro de un campo desplazaría las columnas.
-  Las filas que no tengan exactamente 8 campos se omiten con un aviso.
-- Los códigos ISO de Destino y Origen se validan contra la lista oficial ISO 3166-1 alfa-2
-  (249 códigos), sin distinguir mayúsculas y minúsculas. Códigos no oficiales como `UK`
-  o `XK` se rechazan (Reino Unido es `GB`).
-- Las filas vacías se ignoran. Las filas con campos de más o de menos, código ISO no válido
-  o fecha no válida se omiten mostrando un aviso con el número de línea.
+Cada grupo de destino y fecha se exporta como `AirTortilla_XX_YYYY_MM_DD` en CSV, JSON, XML o TXT.
 
-## Ficheros generados
+---
 
-Se genera un fichero por cada combinación de país de destino y fecha de reserva,
-con el formato `AirTortilla_XX_YYYY_MM_DD.<ext>`.
+## User Stories y tareas medibles
 
-### Formatos de salida
-
-El usuario elige el formato en cada ejecución (solo se genera uno cada vez):
-
-| Opción | Formato | Contenido |
+| US | Tarea | Cómo se comprueba |
 |---|---|---|
-| 1 | `.csv` | Cabecera + una línea por reserva, separada por comas |
-| 2 | `.json` | Lista de objetos con sangría (`JsonSerializer`) |
-| 3 | `.xml` | Lista de objetos (`XmlSerializer`) |
-| 4 | `.txt` | Una línea por reserva, campos separados por ` \| `, sin cabecera |
+| US1 | Contraseñas con BCrypt | En la tabla `usuario` de la base de datos, la contraseña no se ve: aparece un código cifrado que empieza por `$2a$11$` |
+| US1 | Iniciar y cerrar sesión | Con usuario y contraseña correctos, la aplicación te saluda por tu nombre. Si alguno de los dos está mal, muestra el mensaje "Usuario o contraseña incorrectos" |
+| US1 | Páginas protegidas | Si alguien que no ha iniciado sesión intenta entrar en una página, por ejemplo escribiendo `localhost:8080/reservas`, la aplicación le manda a la pantalla de login |
+| US2 | Alta de usuarios solo para el Administrador | Un usuario con rol Empleado no ve la opción *Usuarios* en el menú. Si escribe la dirección `localhost:8080/usuarios` a mano, la aplicación le muestra "Acceso denegado" |
+| US2 | Validación del alta | El nombre debe tener entre 3 y 50 caracteres, la contraseña al menos 8, el rol es obligatorio y no puede haber dos usuarios con el mismo nombre |
+| US2 | Activar y desactivar usuarios | El Administrador puede desactivar a un usuario desde la página *Usuarios*. Ese usuario ya no puede iniciar sesión, y si en ese momento estaba usando la aplicación, se le saca al login en cuanto cambia de página |
+| US3 | Registro de auditoría | Cada inicio de sesión (correcto o fallido), alta, modificación, importación y exportación queda apuntado: quién lo hizo, cuándo y qué cambió |
+| US3 | Consulta de la auditoría | Solo el Administrador ve la página *Auditoría*. Muestra todo lo apuntado, permite filtrar por tipo de acción y no deja editar ni borrar nada |
+| BD | Migración a base de datos | Al importar el CSV de prueba se guardan 5 reservas y aparecen 4 avisos. Si se importa otra vez, no se duplica nada |
+| BD | Consultar y exportar | En *Reservas* se puede ver cada grupo entero (*Total*) o línea a línea, y descargarlo en CSV, JSON, XML o TXT |
+|  Extra  | Docker | Con solo Docker Desktop instalado, la aplicación funciona en `localhost:8080` |
 
-En CSV y TXT la fecha se escribe como `yyyy-MM-dd`. En JSON y XML se serializa el
-`DateTime` completo (`2026-05-14T00:00:00`), ya que ese tipo siempre incluye la hora.
+---
 
-### Ordenación
+## Migración de tecnología
 
-Antes de escribir los ficheros se ordenan los datos en dos niveles:
+En esta entrega se ha cambiado el stack tecnológico. Estos son los cambios respecto a la entrega 1:
 
-1. **Grupos (orden de generación):** por país de destino y, después, por fecha.
-2. **Reservas dentro de cada fichero:** por `Localizador` y, dentro del mismo
-   localizador, por `DocumentoIdentidad`. Así los pasajeros de una misma reserva
-   aparecen juntos y en un orden determinista, sea cual sea el orden del CSV de entrada.
-
-### Complejidad (notación Big O)
-
-Siendo *n* el número de filas del CSV y *g* el número de ficheros generados:
-
-| Fase | Operación | Complejidad |
+| Capa | Entrega 1 | Entrega 2 |
 |---|---|---|
-| Lectura | Recorrer las *n* líneas | O(n) |
-| Validación ISO | Búsqueda en `HashSet` de 249 códigos | O(1) por fila → O(n) |
-| Agrupación | `GroupBy` (basado en tabla hash) | O(n) |
-| Orden de grupos | `OrderBy` + `ThenBy` sobre *g* grupos | O(g log g) |
-| Orden dentro de cada grupo | `OrderBy` + `ThenBy` sobre cada grupo | O(n log n) en el peor caso |
-| Escritura | Escribir las *n* reservas | O(n) |
+| Interfaz | Consola | **Blazor Server** (web) |
+| Persistencia | Ficheros CSV/JSON/XML/TXT | **MySQL 8** |
+| Acceso a datos | `StreamReader` / `File` | **Entity Framework Core 10** |
+| Seguridad | — | Login con cookie, roles y **BCrypt** |
+| Ejecución | `dotnet run` | **Docker Compose** |
 
-**Total: O(n log n)**, determinado por la ordenación. La memoria usada es O(n),
-porque todas las reservas se cargan en una lista antes de agruparlas.
+Las funciones de la entrega 1 se mantienen:
 
-Decisiones relacionadas con el rendimiento:
-- Los códigos ISO se guardan en un `HashSet` en lugar de una `List`. Comprobar si un
-  código existe cuesta O(1) de media, frente a O(249) recorriendo una lista.
-- `ThenBy` no hace una segunda ordenación: añade un criterio de desempate a la misma
-  comparación, así que no cambia la complejidad.
-- `OrderBy` de LINQ es una ordenación **estable**: si dos reservas empatan en todos
-  los criterios, conservan el orden en que venían en el CSV.
+| Consola (entrega 1) | Web (entrega 2) |
+|---|---|
+| Opción 1: leer CSV y generar ficheros | **Importar CSV** guarda en MySQL; los ficheros se generan al **exportar** |
+| Opción 2: consulta total | Botón **Total** |
+| Opción 3: línea a línea (`ENTER` / `Q`) | Botón **Línea a línea** ("Siguiente" / "Salir") |
+| Códigos ISO en un `HashSet` del código | Tabla `Pais` en la base de datos |
+
+El proyecto de consola se ha eliminado del repositorio; su código sigue en el historial de Git (Pull Request #1).
+
+---
+
+## Arquitectura
+
+![Diagrama de Arquitectura](assets/AirTortilla_Arquitectura_E2_V3.drawio.png)
+
+---
+
+## Modelo de datos
+
+![Diagrama Entidad-Relación](assets/AirTortilla_ER.drawio.png)
+
+Script: [`database/airtortilla_schema.sql`](database/airtortilla_schema.sql). Tiene siete tablas: `Pais`, `Reserva`, `Pasajero`, `ReservaPasajero`, `Rol`, `Usuario` y `Auditoria`.
+
+Decisiones principales:
+- **Reserva N:M Pasajero**, resuelta con la tabla intermedia `ReservaPasajero`. Un pasajero que viaja en dos reservas se guarda una sola vez.
+- **Origen, destino y fecha son de la reserva**: todos los pasajeros de un localizador viajan juntos.
+- **Los usuarios se desactivan, no se borran**, para no perder su rastro en la auditoría.
+- **Cada usuario guarda qué administrador lo dio de alta** (columna `CreadoPorId`, que apunta a otro usuario de la misma tabla).
+
+---
+
+## Seguridad
+
+- **Contraseñas con BCrypt:** solo se guarda el hash.
+- **Mismo mensaje para cualquier fallo de login:** no revela qué usuarios existen.
+- **Todas las páginas protegidas por defecto**, y **Usuarios** y **Auditoría** solo para el rol Administrador.
+- **Sesión revalidada en cada petición:** un usuario desactivado es expulsado.
+- **Protección CSRF** en formularios y cierre de sesión.
+- **Ninguna contraseña en el código:** *user-secrets* en desarrollo y `.env` en Docker.
+- **La aplicación no usa la cuenta de administrador de MySQL (`root`):** usa una cuenta propia que solo tiene acceso a la base de datos de AirTortilla.
+- **La base de datos de Docker solo acepta conexiones desde el propio ordenador:** nadie conectado a la misma red (por ejemplo, la wifi de clase) puede entrar en ella.
+
+---
+
+## Patrones de diseño
+
+- **DTO** (`AirTortilla.Web/DTO/`): `ReservasDTO` transporta los datos entre el CSV, la base de datos y los ficheros exportados.
+- **DAO** (`AirTortilla.Web/Data/DAO/`): las páginas usan la interfaz `IReservaDao`; la implementación (`ReservaDaoMySql`) se elige en una línea de `Program.cs`. Volver a ficheros solo requeriría otra implementación.
+- **Factory** (`AirTortilla.Web/Data/Exportacion/`): `ExportadorFactory.Crear("json")` devuelve el exportador adecuado. Añadir un formato es una clase nueva más una línea en la fábrica.
   
+---
+
 ## Conclusión
 
-El sistema cumple los requisitos del enunciado: lee un fichero CSV de reservas, divide las reservas en ficheros por país de
-destino y fecha (añadido) con el formato `AirTortilla_XX_YYYY_MM_DD`, y permite consultarlos
-en modalidad total y línea a línea desde un menú de terminal.
+La aplicación cumple las tres User Stories: los empleados inician sesión, el administrador da de alta y gestiona usuarios, y todos los cambios quedan registrados en la auditoría.
 
-Como ampliaciones sobre el enunciado, se han añadido:
+Además, los datos ya no se guardan en ficheros sino en una base de datos MySQL. Todo lo que hacía la entrega 1 (importar el CSV, consultar las reservas y exportarlas) se puede hacer ahora desde una página web.
 
-- Exportación en cuatro formatos: CSV, JSON, XML y TXT.
-- Ordenación de los ficheros y de las reservas que contienen, con una complejidad
-  total de O(n log n).
-- Validación de cada fila (número de campos, código ISO oficial y formato de fecha)
-  con avisos que indican la línea y el motivo, de modo que una fila incorrecta no
-  detiene el procesamiento del resto.
-- Resumen de la generación (ficheros correctos y fallidos) y ubicación de salida.
+Por último, gracias a Docker, cualquiera puede ponerla en marcha con un solo comando, sin instalar nada más que Docker Desktop.
 
-### Limitaciones conocidas
+**Limitaciones conocidas**
+- Los campos del CSV no pueden contener comas.
+- Un usuario desactivado que esté en una página abierta no es expulsado hasta que navega o recarga.
+- El usuario de MySQL de la aplicación podría borrar la auditoría con acceso directo a la base de datos (desde la aplicación no es posible).
+- El `.env` con contraseñas de demostración está en el repositorio para facilitar la evaluación; en un entorno real no se subiría.
 
-- Los campos no pueden contener comas, porque la lectura no interpreta comillas.
-- Todas las reservas se cargan en memoria antes de agruparlas (O(n)), lo que es
-  adecuado para el volumen de una práctica pero no para ficheros muy grandes.
-- La lista de códigos ISO está escrita en el código y habría que actualizarla a mano
-  si la norma cambia.
-- Si se vuelve a generar, los ficheros con el mismo nombre se sobrescriben y los de
-  ejecuciones anteriores no se eliminan.
-
-### Posibles mejoras
-
-- Usar una librería de lectura de CSV (por ejemplo, CsvHelper) para admitir campos
-  entre comillas.
-- Permitir elegir la carpeta de salida.
-- Añadir pruebas unitarias automáticas para la validación, la agrupación y la ordenación.
+**Posibles mejoras**
+- Admitir campos entre comillas en el CSV (CsvHelper).
+- Cambio de contraseña y bloqueo tras varios intentos fallidos.
+- Paginación en la auditoría y en las reservas.
+- Pruebas unitarias.
