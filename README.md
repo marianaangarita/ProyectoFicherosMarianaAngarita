@@ -184,17 +184,17 @@ Decisiones principales:
 
 | US | Tarea | Cómo se comprueba |
 |---|---|---|
-| US1 | Contraseñas con BCrypt | En la tabla `usuario`, `PasswordHash` empieza por `$2a$11$` |
-| US1 | Login y cierre de sesión | Credenciales correctas → "Hola, *usuario*"; incorrectas → "Usuario o contraseña incorrectos" |
-| US1 | Páginas protegidas | Sin sesión, `/reservas` redirige a `/login` |
-| US2 | Alta solo para Administrador | Un Empleado no ve *Usuarios* y en `/usuarios` recibe "Acceso denegado" |
-| US2 | Validación del alta | Nombre de 3–50 caracteres, contraseña de 8 o más, rol obligatorio, sin repetidos |
-| US2 | Activar / desactivar | Un usuario desactivado no puede entrar y, si estaba dentro, se le expulsa |
-| US3 | Registro de auditoría | Logins, altas, modificaciones, importaciones y exportaciones quedan registrados con usuario, fecha y valores antes/después |
-| US3 | Consulta de auditoría | `/auditoria` (solo Administrador), filtrable por acción y de solo lectura |
-| BD | Migración | El CSV de prueba importa 5 reservas con 4 avisos; importarlo otra vez no duplica nada |
-| BD | Consultar y exportar | *Total*, *Línea a línea* y exportación a CSV, JSON, XML y TXT |
-| BD | Docker | Con solo Docker Desktop, la aplicación funciona en `localhost:8080` |
+| US1 | Contraseñas con BCrypt | En la tabla `usuario` de la base de datos, la contraseña no se ve: aparece un código cifrado que empieza por `$2a$11$` |
+| US1 | Iniciar y cerrar sesión | Con usuario y contraseña correctos, la aplicación te saluda por tu nombre. Si alguno de los dos está mal, muestra el mensaje "Usuario o contraseña incorrectos" |
+| US1 | Páginas protegidas | Si alguien que no ha iniciado sesión intenta entrar en una página, por ejemplo escribiendo `localhost:8080/reservas`, la aplicación le manda a la pantalla de login |
+| US2 | Alta de usuarios solo para el Administrador | Un usuario con rol Empleado no ve la opción *Usuarios* en el menú. Si escribe la dirección `localhost:8080/usuarios` a mano, la aplicación le muestra "Acceso denegado" |
+| US2 | Validación del alta | El nombre debe tener entre 3 y 50 caracteres, la contraseña al menos 8, el rol es obligatorio y no puede haber dos usuarios con el mismo nombre |
+| US2 | Activar y desactivar usuarios | El Administrador puede desactivar a un usuario desde la página *Usuarios*. Ese usuario ya no puede iniciar sesión, y si en ese momento estaba usando la aplicación, se le saca al login en cuanto cambia de página |
+| US3 | Registro de auditoría | Cada inicio de sesión (correcto o fallido), alta, modificación, importación y exportación queda apuntado: quién lo hizo, cuándo y qué cambió |
+| US3 | Consulta de la auditoría | Solo el Administrador ve la página *Auditoría*. Muestra todo lo apuntado, permite filtrar por tipo de acción y no deja editar ni borrar nada |
+| BD | Migración a base de datos | Al importar el CSV de prueba se guardan 5 reservas y aparecen 4 avisos. Si se importa otra vez, no se duplica nada |
+| BD | Consultar y exportar | En *Reservas* se puede ver cada grupo entero (*Total*) o línea a línea, y descargarlo en CSV, JSON, XML o TXT |
+| BD | Docker | Con solo Docker Desktop instalado, la aplicación funciona en `localhost:8080` |
 
 ---
 
@@ -206,7 +206,8 @@ Decisiones principales:
 - **Sesión revalidada en cada petición:** un usuario desactivado es expulsado.
 - **Protección CSRF** en formularios y cierre de sesión.
 - **Ninguna contraseña en el código:** *user-secrets* en desarrollo y `.env` en Docker.
-- **La aplicación no usa `root`:** tiene su propio usuario de MySQL, y el puerto de la base de datos solo es accesible desde el propio ordenador.
+- **La aplicación no usa la cuenta de administrador de MySQL (`root`):** usa una cuenta propia que solo tiene acceso a la base de datos de AirTortilla.
+- **La base de datos de Docker solo acepta conexiones desde el propio ordenador:** nadie conectado a la misma red (por ejemplo, la wifi de clase) puede entrar en ella.
 
 ---
 
