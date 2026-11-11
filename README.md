@@ -21,7 +21,7 @@ Solo necesitas **Docker Desktop** y **GitHub Desktop** (o descargar el ZIP).
 
 ### 1. Descargar el proyecto
 
-- **Con GitHub Desktop:** en <https://github.com/marianaangarita/ProyectoFicherosMarianaAngarita>, pulsa **Code → Open with GitHub Desktop** y después **Clone**. Puedes dejar la carpeta que propone, salvo que esté dentro de OneDrive (en ese caso elige otra, por ejemplo `C:\Repos`).
+- **Con GitHub Desktop:** pulsa **Code → Open with GitHub Desktop** y después **Clone**. Puedes dejar la carpeta que propone, salvo que esté dentro de OneDrive (en ese caso elige otra, por ejemplo `C:\Repos`).
 - **Sin GitHub Desktop:** **Code → Download ZIP** y descomprímelo fuera de OneDrive.
 
 ### 2. Abrir Docker Desktop
