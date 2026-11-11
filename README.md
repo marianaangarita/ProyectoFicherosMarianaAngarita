@@ -14,6 +14,17 @@
 10. [Conclusión](#conclusión)
 
 ---
+## Objetivos de la entrega 
+
+| ID | User Story |
+|---|---|
+| **US1** | Como **Empleado** quiero poder hacer *log in* para acceder a los recursos de la compañía. |
+| **US2** | Como **Administrador** quiero poder dar de alta usuarios para garantizar la seguridad interna de la aplicación. |
+| **US3** | Como **Administrador** quiero mantener la trazabilidad de las modificaciones. |
+
+Además, se migra toda la persistencia a una **base de datos relacional** y se añaden contenedores (Docker).
+
+---
 
 ## Instalación y ejecución
 
@@ -121,18 +132,6 @@ Cada grupo de destino y fecha se exporta como `AirTortilla_XX_YYYY_MM_DD` en CSV
 | Los botones no responden | Recarga la página con `F5`. |
 
 > Las contraseñas del archivo `.env` son **de demostración**: solo sirven para la base de datos que Docker crea en tu propio ordenador, accesible únicamente desde él.
-
----
-
-## Objetivos de la entrega 
-
-| ID | User Story |
-|---|---|
-| **US1** | Como **Empleado** quiero poder hacer *log in* para acceder a los recursos de la compañía. |
-| **US2** | Como **Administrador** quiero poder dar de alta usuarios para garantizar la seguridad interna de la aplicación. |
-| **US3** | Como **Administrador** quiero mantener la trazabilidad de las modificaciones. |
-
-Además, se migra toda la persistencia a una **base de datos relacional** y se añaden contenedores (Docker).
 
 ---
 
