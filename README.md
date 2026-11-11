@@ -164,28 +164,13 @@ El proyecto de consola se ha eliminado del repositorio; su código sigue en el h
 
 ![Diagrama de Arquitectura](assets/AirTortilla_Arquitectura_E2_V3.drawio.png)
 
-```
-AirTortilla.Web/
-├── Components/Pages/   Login, Inicio, Importar, Reservas, Usuarios, Auditoria
-├── Data/
-│   ├── Entities/       Entidades de EF Core
-│   ├── DAO/            IReservaDao + ReservaDaoMySql
-│   ├── CSV/            LectorCsvReservas
-│   ├── Exportacion/    Exportadores + ExportadorFactory
-│   └── Auditor.cs      Registro de auditoría
-├── DTO/                ReservasDTO
-└── Program.cs          Configuración (BD, login, rutas)
-database/               Script SQL y diagrama ER
-docker-compose.yml      MySQL + aplicación
-```
-
 ---
 
 ## Modelo de datos
 
 ![Diagrama Entidad-Relación](assets/AirTortilla_ER.drawio.png)
 
-Script: [`database/airtortilla_schema.sql`](database/airtortilla_schema.sql). Siete tablas: `Pais`, `Reserva`, `Pasajero`, `ReservaPasajero`, `Rol`, `Usuario` y `Auditoria`.
+Script: [`database/airtortilla_schema.sql`](database/airtortilla_schema.sql). Tiene siete tablas: `Pais`, `Reserva`, `Pasajero`, `ReservaPasajero`, `Rol`, `Usuario` y `Auditoria`.
 
 Decisiones principales:
 - **Reserva N:M Pasajero**, resuelta con la tabla intermedia `ReservaPasajero`. Un pasajero que viaja en dos reservas se guarda una sola vez.
@@ -230,6 +215,21 @@ Decisiones principales:
 - **DTO:** `ReservasDTO` transporta los datos entre el CSV, la base de datos y los ficheros exportados.
 - **DAO:** las páginas usan la interfaz `IReservaDao`; la implementación (`ReservaDaoMySql`) se elige en una línea de `Program.cs`. Volver a ficheros solo requeriría otra implementación.
 - **Factory:** `ExportadorFactory.Crear("json")` devuelve el exportador adecuado. Añadir un formato es una clase nueva más una línea en la fábrica.
+  
+```
+AirTortilla.Web/
+├── Components/Pages/   Login, Inicio, Importar, Reservas, Usuarios, Auditoria
+├── Data/
+│   ├── Entities/       Entidades de EF Core
+│   ├── DAO/            IReservaDao + ReservaDaoMySql
+│   ├── CSV/            LectorCsvReservas
+│   ├── Exportacion/    Exportadores + ExportadorFactory
+│   └── Auditor.cs      Registro de auditoría
+├── DTO/                ReservasDTO
+└── Program.cs          Configuración (BD, login, rutas)
+database/               Script SQL y diagrama ER
+docker-compose.yml      MySQL + aplicación
+```
 
 ## Conclusión
 
